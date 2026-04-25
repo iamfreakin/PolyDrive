@@ -6,89 +6,69 @@
 #include "Bus.h"
 #include "SportsCar.h"
 #include "Truck.h"
+#include "UIManager.h"
 
 using namespace std;
 
-void ShowStatus(const WorldManager& wm, Car* currentCar) {
-    cout << "\n========================================" << endl;
-    cout << " [Current Location]: " << wm.GetCurrentCity() << endl;
-    if (currentCar) {
-        cout << " [Current Vehicle ]: " << currentCar->GetName() << endl;
-        cout << " [Total Distance  ]: " << currentCar->GetTotalDistance() << " km" << endl;
-        cout << " [Total Time      ]: " << currentCar->GetTotalTime() << " hours" << endl;
-    } else {
-        cout << " [Current Vehicle ]: None (Please select a vehicle)" << endl;
-    }
-    cout << "========================================\n" << endl;
-}
-
 int main() {
     WorldManager world;
+    UIManager ui;
     vector<Car*> garage;
 
-    // Add vehicles to garage
     garage.push_back(new Bus("Express Bus", 80.0f));
     garage.push_back(new SportsCar("Porsche", 150.0f));
     garage.push_back(new Truck("Heavy Truck", 60.0f));
 
     Car* selectedCar = nullptr;
+    string lastLog = "Welcome to PolyDrive!";
 
     while (true) {
-        ShowStatus(world, selectedCar);
+        ui.UpdateDashboard(selectedCar);
+        ui.ShowVehicleSelection(garage);
 
-        // 1. Vehicle Selection
-        cout << "1. Which vehicle would you like to drive?" << endl;
-        for (int i = 0; i < (int)garage.size(); ++i) {
-            cout << "  (" << i + 1 << ") " << garage[i]->GetName() << endl;
-        }
-        cout << "  (0) Exit Program" << endl;
-        cout << ">> Select: ";
-        
         int carChoice;
         if (!(cin >> carChoice)) break;
 
         if (carChoice == 0) break;
         if (carChoice > 0 && carChoice <= (int)garage.size()) {
             selectedCar = garage[carChoice - 1];
+            lastLog = "Selected vehicle: " + selectedCar->GetName();
         } else {
-            cout << "Invalid selection. Please try again." << endl;
+            lastLog = "Invalid vehicle selection.";
             continue;
         }
 
-        // 2. Destination Selection
-        vector<Route> routes = world.GetAvailableRoutes();
-        cout << "\n2. Where would you like to go?" << endl;
-        for (int i = 0; i < (int)routes.size(); ++i) {
-            cout << "  (" << i + 1 << ") " << routes[i].destination 
-                 << " (" << routes[i].distance << " km)" << endl;
-        }
-        cout << "  (0) Back to Menu" << endl;
-        cout << ">> Select: ";
+        while (true) {
+            ui.UpdateDashboard(selectedCar);
+            vector<Route> routes = world.GetAvailableRoutes();
+            ui.UpdateNavigation(world.GetCurrentCity(), routes, lastLog);
 
-        int routeChoice;
-        if (!(cin >> routeChoice)) break;
+            int routeChoice;
+            if (!(cin >> routeChoice)) break;
 
-        if (routeChoice == 0) continue;
-        if (routeChoice > 0 && routeChoice <= (int)routes.size()) {
-            Route selectedRoute = routes[routeChoice - 1];
+            if (routeChoice == 0) {
+                lastLog = "Returned to garage.";
+                break;
+            }
             
-            // Movement logic (Polymorphism in action!)
-            float travelTime = selectedCar->Move(selectedRoute.distance);
-            world.MoveTo(selectedRoute.destination);
+            if (routeChoice > 0 && routeChoice <= (int)routes.size()) {
+                Route selectedRoute = routes[routeChoice - 1];
+                
+                float travelTime = selectedCar->Move(selectedRoute.distance);
+                world.MoveTo(selectedRoute.destination);
 
-            cout << "\n[Notice] Arrived at " << selectedRoute.destination << "!" << endl;
-            cout << "[Result] Travel time: " << travelTime << " hours." << endl;
-        } else {
-            cout << "Invalid selection. Please try again." << endl;
+                lastLog = "Arrived at " + selectedRoute.destination + " (" + to_string(travelTime).substr(0,4) + "h)";
+            } else {
+                lastLog = "Invalid destination selection.";
+            }
         }
     }
 
-    // Cleanup memory
     for (Car* car : garage) {
         delete car;
     }
-    garage.clear();
-
+    
+    ui.ClearScreen();
     cout << "Exiting program..." << endl;
     return 0;
 }

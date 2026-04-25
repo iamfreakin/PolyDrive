@@ -160,6 +160,7 @@
     <ClInclude Include="Truck.h" />
     <ClInclude Include="WorldData.h" />
     <ClInclude Include="WorldManager.h" />
+    <ClInclude Include="UIManager.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Car.cpp" />
@@ -167,6 +168,7 @@
     <ClCompile Include="SportsCar.cpp" />
     <ClCompile Include="Truck.cpp" />
     <ClCompile Include="WorldManager.cpp" />
+    <ClCompile Include="UIManager.cpp" />
     <ClCompile Include="Main.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
