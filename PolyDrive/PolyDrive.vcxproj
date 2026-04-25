@@ -154,7 +154,20 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="PolyDrive.cpp" />
+    <ClInclude Include="Car.h" />
+    <ClInclude Include="Bus.h" />
+    <ClInclude Include="SportsCar.h" />
+    <ClInclude Include="Truck.h" />
+    <ClInclude Include="WorldData.h" />
+    <ClInclude Include="WorldManager.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Car.cpp" />
+    <ClCompile Include="Bus.cpp" />
+    <ClCompile Include="SportsCar.cpp" />
+    <ClCompile Include="Truck.cpp" />
+    <ClCompile Include="WorldManager.cpp" />
+    <ClCompile Include="Main.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
