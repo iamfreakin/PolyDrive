@@ -1,4 +1,5 @@
 #include "WorldManager.h"
+#include <algorithm>
 
 WorldManager::WorldManager() {
     InitializeData();
@@ -6,12 +7,33 @@ WorldManager::WorldManager() {
 }
 
 void WorldManager::InitializeData() {
-    // Distance data in km
-    cities["Gwangju"] = { "Gwangju", { {"Daejeon", 170.0f}, {"Busan", 260.0f} } };
-    cities["Daejeon"] = { "Daejeon", { {"Seoul", 160.0f}, {"Busan", 200.0f} } };
-    cities["Busan"] = { "Busan", { {"Seoul", 390.0f}, {"Gangneung", 300.0f} } };
-    cities["Seoul"] = { "Seoul", { {"Gangneung", 220.0f}, {"Gwangju", 290.0f} } };
-    cities["Gangneung"] = { "Gangneung", { {"Seoul", 220.0f} } };
+    // Define all cities in the world
+    std::vector<std::string> allCityNames = { "Gwangju", "Daejeon", "Busan", "Seoul", "Gangneung" };
+    
+    // Distance mapping for any pair (approximated km)
+    std::map<std::pair<std::string, std::string>, float> distances = {
+        {{"Gwangju", "Daejeon"}, 170.0f}, {{"Gwangju", "Busan"}, 260.0f}, {{"Gwangju", "Seoul"}, 290.0f}, {{"Gwangju", "Gangneung"}, 350.0f},
+        {{"Daejeon", "Seoul"}, 160.0f}, {{"Daejeon", "Busan"}, 200.0f}, {{"Daejeon", "Gangneung"}, 240.0f},
+        {{"Busan", "Seoul"}, 390.0f}, {{"Busan", "Gangneung"}, 300.0f},
+        {{"Seoul", "Gangneung"}, 220.0f}
+    };
+
+    for (const auto& start : allCityNames) {
+        City city;
+        city.name = start;
+        for (const auto& end : allCityNames) {
+            if (start == end) continue; // Skip same city
+
+            float dist = 0.0f;
+            // Find distance in the map (check both directions)
+            if (distances.count({start, end})) dist = distances[{start, end}];
+            else if (distances.count({end, start})) dist = distances[{end, start}];
+            else dist = 250.0f; // Default if not found
+
+            city.routes.push_back({ end, dist });
+        }
+        cities[start] = city;
+    }
 }
 
 std::string WorldManager::GetCurrentCity() const {
