@@ -1,3 +1,5 @@
+# GCC 2주차 과제
+---
 # Car Polymorphism Simulator (PolyDrive)
 
 C++의 상속과 다형성을 활용하여 다양한 차량의 주행 특성을 시뮬레이션하는 콘솔 기반 어플리케이션입니다.
