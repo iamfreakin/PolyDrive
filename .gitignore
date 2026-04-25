@@ -1,5 +1,28 @@
+# Visual Studio Temporary Files
+.vs/
+x64/
+Debug/
+Release/
+*.user
+*.aps
+*.pdb
+*.obj
+*.exe
+*.log
+*.tlog
+*.lastbuildstate
+*.idb
+*.ipch
+*.sdf
+*.bak
+*.cache
+*.ilk
+*.suo
+
+# Rider/IntelliJ
+.idea/
+*.sln.iml
+
+# Build output
 bin/
 obj/
-/packages/
-riderModule.iml
-/_ReSharper.Caches/

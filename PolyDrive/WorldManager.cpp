@@ -2,16 +2,16 @@
 
 WorldManager::WorldManager() {
     InitializeData();
-    currentCity = "광주"; // 시작 도시
+    currentCity = "Gwangju"; // Start City
 }
 
 void WorldManager::InitializeData() {
-    // 데이터 시트에 기반한 경로 설정
-    cities["광주"] = { "광주", { {"대전", 170.0f}, {"부산", 260.0f} } };
-    cities["대전"] = { "대전", { {"서울", 160.0f}, {"부산", 200.0f} } };
-    cities["부산"] = { "부산", { {"서울", 390.0f}, {"강릉", 300.0f} } };
-    cities["서울"] = { "서울", { {"강릉", 220.0f}, {"광주", 290.0f} } };
-    cities["강릉"] = { "강릉", { {"서울", 220.0f} } }; // 되돌아가는 경로 등 추가 가능
+    // Distance data in km
+    cities["Gwangju"] = { "Gwangju", { {"Daejeon", 170.0f}, {"Busan", 260.0f} } };
+    cities["Daejeon"] = { "Daejeon", { {"Seoul", 160.0f}, {"Busan", 200.0f} } };
+    cities["Busan"] = { "Busan", { {"Seoul", 390.0f}, {"Gangneung", 300.0f} } };
+    cities["Seoul"] = { "Seoul", { {"Gangneung", 220.0f}, {"Gwangju", 290.0f} } };
+    cities["Gangneung"] = { "Gangneung", { {"Seoul", 220.0f} } };
 }
 
 std::string WorldManager::GetCurrentCity() const {
