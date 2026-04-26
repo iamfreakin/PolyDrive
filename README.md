@@ -125,3 +125,13 @@ graph TD
 | **Sedan** | 90 km/h | 8.0 km/E | 1~3 | 2500 G | 저렴하고 균형 잡힌 스탯 |
 
 *모든 차량은 상점 등장 시 위 기본 수치에서 +/- 30% 보정이 적용됩니다.*
+
+
+## 단계별 학습 가이드
+이 프로젝트를 깊이 있게 이해하려면 아래 순서대로 문서를 읽어보세요.
+
+1. **[02. Car Class](DOCS/02_Car_Class.md)**: 모든 차량의 근간이 되는 추상 기반 클래스 설계
+2. **[03. Inheritance](DOCS/03_Inheritance.md)**: 자식 클래스에서 부모의 기능을 확장하고 재정의하는 법
+3. **[04. Vector Management](DOCS/04_Vector_Management.md)**: 동적 할당된 객체들을 안전하게 관리하고 해제하는 기술
+4. **[05. Game Loop](DOCS/05_Game_Loop.md)**: 매니저 클래스들이 협력하여 게임을 구동하는 원리
+5. **[06. Shop System](DOCS/06_Shop_System.md)**: **상속과 다형성의 정점.** 상점에서 무작위 객체가 생성되고 관리되는 과정
