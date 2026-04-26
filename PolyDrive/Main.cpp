@@ -1,74 +1,77 @@
-#include <iostream>
-#include <vector>
-#include <string>
-#include "Car.h"
 #include "WorldManager.h"
-#include "Bus.h"
-#include "SportsCar.h"
-#include "Truck.h"
 #include "UIManager.h"
-
-using namespace std;
+#include <iostream>
 
 int main() {
-    WorldManager world;
+    WorldManager wm;
     UIManager ui;
-    vector<Car*> garage;
+    int choice = -1;
 
-    garage.push_back(new Bus("Express Bus", 80.0f));
-    garage.push_back(new SportsCar("Porsche", 150.0f));
-    garage.push_back(new Truck("Heavy Truck", 60.0f));
-
-    Car* selectedCar = nullptr;
-    string lastLog = "Welcome to PolyDrive!";
-
-    while (true) {
-        ui.UpdateDashboard(selectedCar);
-        ui.ShowVehicleSelection(garage);
-
-        int carChoice;
-        if (!(cin >> carChoice)) break;
-
-        if (carChoice == 0) break;
-        if (carChoice > 0 && carChoice <= (int)garage.size()) {
-            selectedCar = garage[carChoice - 1];
-            lastLog = "Selected vehicle: " + selectedCar->GetName();
-        } else {
-            lastLog = "Invalid vehicle selection.";
+    while (choice != 0) {
+        ui.DrawGame(wm);
+        ui.DrawMenu();
+        
+        if (!(std::cin >> choice)) {
+            std::cin.clear();
+            std::cin.ignore(1000, '\n');
             continue;
         }
 
-        while (true) {
-            ui.UpdateDashboard(selectedCar);
-            vector<Route> routes = world.GetAvailableRoutes();
-            ui.UpdateNavigation(world.GetCurrentCity(), routes, lastLog);
-
-            int routeChoice;
-            if (!(cin >> routeChoice)) break;
-
-            if (routeChoice == 0) {
-                lastLog = "Returned to garage.";
+        switch (choice) {
+            case 1: { // Move
+                ui.DrawGame(wm);
+                ui.DrawMainContent(wm, 1);
+                std::cout << " Select route (0 to cancel): ";
+                int rIdx;
+                if (std::cin >> rIdx && rIdx > 0) {
+                    std::string msg;
+                    if (wm.Travel(rIdx - 1, msg)) {
+                        ui.SetLog(msg);
+                    } else {
+                        ui.SetLog("[Error] " + msg);
+                    }
+                }
                 break;
             }
-            
-            if (routeChoice > 0 && routeChoice <= (int)routes.size()) {
-                Route selectedRoute = routes[routeChoice - 1];
-                
-                float travelTime = selectedCar->Move(selectedRoute.distance);
-                world.MoveTo(selectedRoute.destination);
-
-                lastLog = "Arrived at " + selectedRoute.destination + " (" + to_string(travelTime).substr(0,4) + "h)";
-            } else {
-                lastLog = "Invalid destination selection.";
+            case 2: { // Rest
+                wm.RestDay();
+                ui.SetLog("Rested. Energy refilled and Shop refreshed!");
+                break;
             }
+            case 3: { // Select Car
+                ui.DrawGame(wm);
+                ui.DrawMainContent(wm, 3);
+                std::cout << " Select car to drive (0 to cancel): ";
+                int gIdx;
+                if (std::cin >> gIdx && gIdx > 0) {
+                    wm.SelectCar(gIdx - 1);
+                    ui.SetLog("Car changed!");
+                }
+                break;
+            }
+            case 4: { // Shop
+                ui.DrawGame(wm);
+                ui.DrawMainContent(wm, 4);
+                std::cout << " Select car to buy (0 to cancel): ";
+                int sIdx;
+                if (std::cin >> sIdx && sIdx > 0) {
+                    std::string msg;
+                    if (wm.BuyCar(sIdx - 1, msg)) {
+                        ui.SetLog(msg);
+                    } else {
+                        ui.SetLog("[Error] " + msg);
+                    }
+                }
+                break;
+            }
+            case 0: // Exit
+                ui.SetLog("Exiting game... Goodbye!");
+                break;
+            default:
+                ui.SetLog("Invalid option!");
+                break;
         }
     }
 
-    for (Car* car : garage) {
-        delete car;
-    }
-    
-    ui.ClearScreen();
-    cout << "Exiting program..." << endl;
     return 0;
 }
