@@ -3,20 +3,17 @@
 상점 시스템은 **상속, 다형성, 그리고 객체의 인스턴스화**가 실제 게임 로직에서 어떻게 어우러지는지 보여주는 가장 좋은 예시입니다.
 
 ## 1. 다형성을 이용한 "진열장"
-
 ```cpp
 // WorldManager.h
 std::vector<Car*> shopList; // 부모 포인터로 자식들을 일괄 관리
 ```
-
 상점의 매물 리스트는 `std::vector<Car*> shopList`라는 하나의 컨테이너로 관리됩니다. 
 - 이 리스트의 타입은 부모인 `Car*`이지만, 실제로는 `Bus`, `SportsCar`, `Truck`, `Sedan` 중 어떤 자식 객체든 담을 수 있습니다.
 - 상점 UI를 그릴 때, 프로그램은 그 차가 정확히 어떤 종류인지 일일이 체크하지 않습니다. 그저 `shopList[i]->ShowSpec()`을 호출할 뿐이며, 각 객체는 **다형성(Polymorphism)**에 의해 자신의 정체성에 맞는 정보를 스스로 출력합니다.
 
 ## 2. 팩토리 로직: 객체의 무작위 생성
-
 ```cpp
-// WorldManager.cpp
+// WorldManager.cpp (GenerateShop 함수 중)
 CarType type = static_cast<CarType>(rand() % (int)CarType::COUNT);
 switch (type) {
     case CarType::BUS:       newCar = new Bus(...); break;
@@ -24,20 +21,17 @@ switch (type) {
     // ... 상황에 맞는 자식 객체를 동적으로 생성
 }
 ```
-
 `WorldManager::GenerateShop()` 함수는 게임 내에서 '휴식'을 취할 때마다 새로운 차량을 찍어내는 공장(Factory) 역할을 합니다.
 1. **타입 결정**: `rand() % 4`를 통해 어떤 자식 클래스의 인스턴스를 만들지 무작위로 결정합니다.
 2. **동적 할당**: `new` 키워드를 사용하여 선택된 클래스를 메모리에 올립니다.
 3. **업캐스팅(Upcasting)**: 생성된 자식 객체는 즉시 부모 포인터 타입(`Car*`)으로 변환되어 리스트에 추가됩니다.
 
 ## 3. 같은 클래스, 다른 데이터 (개별성)
-
 ```cpp
 // WorldManager.cpp
 float modifier = 0.7f + (rand() % 61) / 100.0f; // 0.7 ~ 1.3배 보정
 newCar = new Sedan(name, 90.0f * modifier, 8.0f * modifier, dur, ...);
 ```
-
 상점 시스템의 묘미는 **"같은 종류의 차라도 성능이 다르다"**는 점에 있습니다.
 - 모든 차량은 생성될 때 기본 스탯에 `modifier` (0.7 ~ 1.3배)라는 랜덤 보정치를 할당받습니다.
 - 이는 **클래스(설계도)**는 하나지만, 그 설계도로부터 만들어진 **객체(실체)**는 메모리 상에서 서로 다른 속성값을 보유한 독립적인 존재임을 증명합니다.
