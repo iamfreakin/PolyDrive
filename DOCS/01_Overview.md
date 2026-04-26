@@ -52,19 +52,27 @@ classDiagram
 
 ```mermaid
 graph TD
-    Start([게임 시작]) --> Init[초기화: 5000G, 차량 지급]
+    Start([게임 시작]) --> Init[초기화: 5000G, 스타터 세단 지급]
     Init --> Loop{메인 루프}
     
-    Loop --> UI[대시보드 출력]
-    UI --> Input{사용자 선택}
+    Loop --> UI[대시보드 출력: 상태창 & 메뉴]
+    UI --> Input{사용자 동작 선택}
     
-    Input -- 1. 이동 --> Travel[이동 로직: 에너지 계산 & 내구도 감소]
-    Travel --> DurCheck{내구도 소진?}
-    DurCheck -- 예 --> Destroy[차량 파괴 및 삭제] --> Loop
-    DurCheck -- 아니오 --> Loop
+    Input -- 1. 이동 --> Route[목적지 선택]
+    Route --> Energy{에너지 체크}
+    Energy -- 충분 --> Drive[이동: 랜덤 보상 80~120% 획득, 내구도 -1]
+    Energy -- 부족 --> Log[로그: 에너지 부족!] --> Loop
+    Drive --> Destroyed{내구도 == 0?}
+    Destroyed -- 예 --> Scrap[차량 파괴 및 삭제] --> Loop
+    Destroyed -- 아니오 --> Loop
 
-    Input -- 2. 휴식 --> Rest[Day 증가 & 상점 갱신] --> Loop
-    Input -- 4. 상점 --> Shop[차량 구매 & 벡터 추가] --> Loop
+    Input -- 2. 휴식 --> Refill[날짜 증가, 에너지 100%, 상점 갱신] --> Loop
+    Input -- 3. 선택 --> Garage[보유 차량 중 운행 차량 변경] --> Loop
+    Input -- 4. 상점 --> Buy{자금 체크}
+    Buy -- 성공 --> AddGarage[차고에 차량 추가] --> Loop
+    Buy -- 실패 --> Log2[로그: 자금 부족!] --> Loop
+
+    Input -- 0. 종료 --> End([메모리 해제 및 종료])
 ```
 
 ---
