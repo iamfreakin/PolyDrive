@@ -3,6 +3,9 @@
 **PolyDrive**는 다양한 차량을 운전하며 도시 간 물류를 운송하고 자산을 불려 나가는 **텍스트 기반 하이웨이 시뮬레이션 게임**입니다. C++의 객체 지향 프로그래밍(OOP) 핵심 원칙인 **상속과 다형성**을 실무적인 게임 로직에 적용하여 설계되었습니다.
 
 ---
+# 유튜브
+[![유튜브 영상](http://img.youtube.com/vi/k-Gc-b3v4RA/0.jpg)](https://www.youtube.com/watch?v=k-Gc-b3v4RA) 
+---
 
 ## 🎮 Game Overview
 
