@@ -163,10 +163,6 @@
     <ClInclude Include="UIManager.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Car.cpp" />
-    <ClCompile Include="Bus.cpp" />
-    <ClCompile Include="SportsCar.cpp" />
-    <ClCompile Include="Truck.cpp" />
     <ClCompile Include="WorldManager.cpp" />
     <ClCompile Include="UIManager.cpp" />
     <ClCompile Include="Main.cpp" />

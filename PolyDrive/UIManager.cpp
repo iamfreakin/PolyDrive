@@ -1,107 +1,77 @@
 #include "UIManager.h"
 #include <iostream>
 #include <iomanip>
+#include <cstdlib>
 
-UIManager::UIManager() {
-    hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-    ClearScreen();
-}
+UIManager::UIManager() : lastLog("Welcome to PolyDrive!") {}
 
-void UIManager::SetCursor(int x, int y) {
-    COORD pos = { (SHORT)x, (SHORT)y };
-    SetConsoleCursorPosition(hConsole, pos);
-}
-
-void UIManager::ClearScreen() {
-    system("cls");
-    DrawFrame();
-}
-
-void UIManager::DrawFrame() {
-    // Vertical divider
-    for (int i = 0; i < 25; ++i) {
-        SetCursor(40, i);
-        std::cout << "|";
-    }
-}
-
-void UIManager::UpdateNavigation(const std::string& location, const std::vector<Route>& routes, const std::string& log) {
-    // Clear Navigation Area
-    for (int i = 1; i < 20; ++i) {
-        SetCursor(0, i);
-        std::cout << std::string(39, ' ');
-    }
-
-    SetCursor(2, 1);
-    std::cout << "[ Navigation ]";
-    SetCursor(2, 3);
-    std::cout << "Current City: " << location;
-
-    SetCursor(2, 5);
-    std::cout << "Available Destinations:";
-    for (int i = 0; i < (int)routes.size(); ++i) {
-        SetCursor(4, 6 + i);
-        std::cout << "(" << i + 1 << ") " << routes[i].destination 
-                  << " (" << routes[i].distance << " km)";
-    }
-
-    SetCursor(2, 15);
-    std::cout << "-------------------------------";
-    SetCursor(2, 16);
-    std::cout << "LOG: " << log;
+void UIManager::DrawGame(const WorldManager& wm) {
+    system("cls"); // 화면 초기화
     
-    SetCursor(2, 22);
-    std::cout << ">> Select Destination (0 to Back): ";
-}
+    std::cout << "======================================================================\n";
+    std::cout << "   PolyDrive - Highway Delivery Simulator\n";
+    std::cout << "======================================================================\n";
 
-void UIManager::UpdateDashboard(Car* currentCar) {
-    // Clear Dashboard Area
-    for (int i = 1; i < 12; ++i) {
-        SetCursor(42, i);
-        std::cout << std::string(37, ' ');
-    }
+    // 상단 상태바 (간략화된 버전)
+    std::cout << " [Day " << std::setw(3) << wm.GetDay() << "] | ";
+    std::cout << " [Cash: " << std::setw(6) << wm.GetMoney() << " G] | ";
+    std::cout << " [Energy: " << std::setw(3) << wm.GetEnergy() << "%]\n";
+    std::cout << "----------------------------------------------------------------------\n";
 
-    SetCursor(45, 1);
-    std::cout << "=======================";
-    SetCursor(45, 2);
-    std::cout << "   TOTAL DASHBOARD";
-    SetCursor(45, 3);
-    std::cout << "=======================";
-
-    if (currentCar) {
-        SetCursor(45, 5);
-        std::cout << "- Vehicle: " << currentCar->GetName();
-        SetCursor(45, 6);
-        std::cout << "- Distance: " << std::fixed << std::setprecision(1) << currentCar->GetTotalDistance() << " km";
-        SetCursor(45, 7);
-        std::cout << "- Total Time: " << currentCar->GetTotalTime() << " hours";
+    // 현재 위치 및 차량 정보
+    std::cout << " Current Location: " << wm.GetCurrentCity() << "\n";
+    if (wm.GetCurrentCar()) {
+        std::cout << " Current Car: " << wm.GetCurrentCar()->GetName() 
+                  << " (Eff: " << wm.GetCurrentCar()->GetEfficiency() 
+                  << " / Dur: " << wm.GetCurrentCar()->GetDurability() << "/3)\n";
     } else {
-        SetCursor(45, 5);
-        std::cout << "- Vehicle: [None]";
+        std::cout << " Current Car: NONE (Please select or buy a car!)\n";
     }
-    SetCursor(45, 9);
-    std::cout << "=======================";
+    std::cout << "----------------------------------------------------------------------\n";
+
+    // 로그 출력
+    if (!lastLog.empty()) {
+        std::cout << " Log: " << lastLog << "\n";
+        std::cout << "----------------------------------------------------------------------\n";
+    }
 }
 
-void UIManager::ShowVehicleSelection(const std::vector<Car*>& garage) {
-    // Clear Navigation Area for selection
-    for (int i = 1; i < 20; ++i) {
-        SetCursor(0, i);
-        std::cout << std::string(39, ' ');
+void UIManager::DrawMainContent(const WorldManager& wm, int mode) {
+    switch (mode) {
+        case 1: { // Move
+            std::cout << " [ Available Routes ]\n";
+            auto routes = wm.GetCurrentRoutes();
+            for (int i = 0; i < routes.size(); ++i) {
+                std::cout << " " << i + 1 << ". To " << std::left << std::setw(12) << routes[i].destination 
+                          << " | Dist: " << std::setw(5) << (int)routes[i].distance << "km"
+                          << " | Reward: ~" << routes[i].baseReward << "G\n";
+            }
+            break;
+        }
+        case 3: { // Garage
+            std::cout << " [ Your Garage ]\n";
+            auto& garage = wm.GetGarage();
+            if (garage.empty()) std::cout << " (Empty)\n";
+            for (int i = 0; i < garage.size(); ++i) {
+                std::cout << " " << i + 1 << ". ";
+                garage[i]->ShowSpec();
+            }
+            break;
+        }
+        case 4: { // Shop
+            std::cout << " [ Car Shop - Rest to Refresh ]\n";
+            auto& shop = wm.GetShopList();
+            for (int i = 0; i < shop.size(); ++i) {
+                std::cout << " " << i + 1 << ". ";
+                shop[i]->ShowSpec();
+            }
+            break;
+        }
     }
+    std::cout << "----------------------------------------------------------------------\n";
+}
 
-    SetCursor(2, 1);
-    std::cout << "[ Garage ]";
-    SetCursor(2, 3);
-    std::cout << "Select your vehicle:";
-
-    for (int i = 0; i < (int)garage.size(); ++i) {
-        SetCursor(4, 5 + i);
-        std::cout << "(" << i + 1 << ") " << garage[i]->GetName();
-    }
-    SetCursor(4, 5 + (int)garage.size());
-    std::cout << "(0) Exit Program";
-
-    SetCursor(2, 22);
-    std::cout << ">> Select Vehicle: ";
+void UIManager::DrawMenu() {
+    std::cout << " [Menu] 1.Move  2.Rest  3.Select  4.Shop  0.Exit\n";
+    std::cout << " >> ";
 }

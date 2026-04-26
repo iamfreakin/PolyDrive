@@ -1,20 +1,24 @@
 #pragma once
+#include "WorldManager.h"
 #include <string>
-#include <vector>
-#include <Windows.h>
-#include "WorldData.h"
-#include "Car.h"
 
 class UIManager {
 private:
-    HANDLE hConsole;
-    void SetCursor(int x, int y);
-    void DrawFrame();
+    std::string lastLog;
 
 public:
     UIManager();
-    void ClearScreen();
-    void UpdateNavigation(const std::string& location, const std::vector<Route>& routes, const std::string& log);
-    void UpdateDashboard(Car* currentCar);
-    void ShowVehicleSelection(const std::vector<Car*>& garage);
+    
+    // 전체 화면을 다시 그림
+    void DrawGame(const WorldManager& wm);
+    
+    // 섹션별 출력 함수
+    void DrawHeader();
+    void DrawStatus(const WorldManager& wm);
+    void DrawMenu();
+    void DrawMainContent(const WorldManager& wm, int mode); // 1: Move, 3: Garage, 4: Shop
+    
+    // 로그 설정
+    void SetLog(std::string msg) { lastLog = msg; }
+    void ClearLog() { lastLog = ""; }
 };
