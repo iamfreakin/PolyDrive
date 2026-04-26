@@ -7,7 +7,7 @@ public:
         : Car(n, speed, eff, dur, p) {}
 
     void ShowSpec() const override {
-        std::cout << "[Sedan]";
+        std::cout << "[Sedan] " << std::left << std::setw(12) << name;
         Car::ShowSpec();
     }
 };

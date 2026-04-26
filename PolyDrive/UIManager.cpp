@@ -42,8 +42,8 @@ void UIManager::DrawMainContent(const WorldManager& wm, int mode) {
             std::cout << " [ Available Routes ]\n";
             auto routes = wm.GetCurrentRoutes();
             for (int i = 0; i < routes.size(); ++i) {
-                std::cout << " " << i + 1 << ". To " << std::left << std::setw(12) << routes[i].destination 
-                          << " | Dist: " << std::setw(5) << (int)routes[i].distance << "km"
+                std::cout << " " << i + 1 << ". To " << std::left << std::setw(10) << routes[i].destination 
+                          << " | Dist: " << std::setw(3) << (int)routes[i].distance << "km"
                           << " | Reward: ~" << routes[i].baseReward << "G\n";
             }
             break;

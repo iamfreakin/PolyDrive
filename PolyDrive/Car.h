@@ -23,13 +23,13 @@ public:
         return distance / baseSpeed;
     }
 
-    // 차량 스펙 출력
+    // 차량 스펙 출력 (한 줄로 변경)
     virtual void ShowSpec() const {
-        std::cout << " [" << name << "]\n";
-        std::cout << " - Speed: " << std::fixed << std::setprecision(1) << baseSpeed << " km/h\n";
-        std::cout << " - Efficiency: " << efficiency << " km/E\n";
-        std::cout << " - Durability: " << durability << " / 3\n";
-        std::cout << " - Price: " << price << " G\n";
+        std::cout << std::fixed << std::setprecision(1)
+                  << " | Speed: " << std::setw(5) << baseSpeed 
+                  << " | Eff: " << std::setw(4) << efficiency 
+                  << " | Dur: " << durability << "/3"
+                  << " | Price: " << std::setw(5) << price << "G\n";
     }
 
     // Getter
