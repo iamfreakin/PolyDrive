@@ -1,57 +1,124 @@
-# GCC 2주차 과제
----
-# Car Polymorphism Simulator (PolyDrive)
+# 🏎️ PolyDrive: Highway Delivery Simulator
 
-C++의 상속과 다형성을 활용하여 다양한 차량의 주행 특성을 시뮬레이션하는 콘솔 기반 어플리케이션입니다.
-
-## 1. 핵심 목표 (Core Objectives)
-- **상속과 다형성 증명**: 동일한 `Move()` 명령이 차종에 따라 다르게 계산되는 동적 바인딩(Dynamic Binding) 구현.
-- **시스템 모듈화**: 헤더(.h)와 소스(.cpp) 파일을 분리하여 엔진 아키텍처의 기초 확립.
-- **데이터 관리**: `std::vector`를 사용해 차량 목록과 스테이지 정보를 효율적으로 관리.
-
-## 2. 클래스 아키텍처 (Class Architecture)
-
-### 부모 클래스: `Car` (추상 클래스)
-- **속성 (protected)**: `name`, `baseSpeed`, `totalDistance`, `totalTime`.
-- **기능 (virtual)**:
-    - `virtual float Move(float distance) = 0;`: 거리당 소요 시간을 계산하는 순수 가상 함수.
-    - `virtual void Display() const;`: 차량 정보를 출력하는 가상 함수.
-    - `virtual ~Car();`: 메모리 누수 방지를 위한 가상 소멸자.
-
-### 자식 클래스 (Specialization)
-- **Bus**: 이동 시 반드시 '정류장 정차 시간(0.5h)'이 추가됨.
-- **SportsCar**: 고속 주행 특화, 동일 거리 대비 시간 단축 계산식 적용.
-- **Truck**: 속도는 느리지만 안정적인 주행 데이터 처리.
-
-## 3. 월드 및 데이터 시스템 (World Data)
-
-### 도시 간 거리 데이터
-| 출발지 | 목적지 | 거리 (km) |
-| :--- | :--- | :--- |
-| 광주 | 대전 | 170 |
-| 광주 | 부산 | 260 |
-| 대전 | 서울 | 160 |
-| 대전 | 부산 | 200 |
-| 부산 | 서울 | 390 |
-| 부산 | 강릉 | 300 |
-| 서울 | 강릉 | 220 |
-| 서울 | 광주 | 290 |
-
-## 4. UI 레이아웃 (2-Layer Split Screen)
-
-### 좌측: Navigation Layer (선택 및 로그)
-- 현재 위치 표시 및 이동 가능한 목적지 리스트.
-- 차량 선택 메뉴 및 주행 결과 로그.
-
-### 우측: Dashboard Layer (실시간 상태)
-- **Total Distance**: 누적 주행 거리 (km).
-- **Total Time**: 누적 주행 시간 (hours).
-- **Current Vehicle**: 현재 탑승 중인 차량의 상세 스펙.
-
-## 5. 기술적 강조 포인트 (Technical Highlights)
-1. **동적 바인딩 (Dynamic Binding)**: `vtable`을 통한 런타임 다형성 구현 설명.
-2. **메모리 안전성**: 가상 소멸자를 통한 포인터 객체 삭제 시 안정성 확보.
-3. **캡슐화 (Encapsulation)**: 멤버 변수 보호 및 인터페이스를 통한 데이터 조작.
+**PolyDrive**는 다양한 차량을 운전하며 도시 간 물류를 운송하고 자산을 불려 나가는 **텍스트 기반 하이웨이 시뮬레이션 게임**입니다. C++의 객체 지향 프로그래밍(OOP) 핵심 원칙인 **상속과 다형성**을 실무적인 게임 로직에 적용하여 설계되었습니다.
 
 ---
-**Summary**: 이 프로젝트는 사용자가 "어떤 차로 어디를 갈지" 결정하는 과정에서 발생하는 데이터 변화를 상속과 다형성 기술로 처리하는 시뮬레이터입니다.
+
+## 🎮 Game Overview
+
+- **목적**: 제한된 에너지와 차량 내구도를 관리하며 최대한 많은 수익을 창출하세요.
+- **핵심 루프**: 
+  1. **상점**: 랜덤하게 등장하는 6대의 차량 중 연비와 성능을 고려해 구매합니다.
+  2. **관리**: 보유한 차량 중 현재 운행할 차량을 선택합니다.
+  3. **운송**: 목적지별 거리와 에너지를 계산하여 이동하고 보상을 획득합니다.
+  4. **휴식**: 하루를 마무리하며 에너지를 충전하고 상점 물건을 갱신합니다.
+
+---
+
+## 🛠️ System Architecture
+
+### 1. Class Diagram
+차량 시스템은 추상 기반 클래스인 `Car`를 중심으로 설계되었습니다. 모든 차량은 동일한 인터페이스를 가지지만, 실제 동작은 각 자식 클래스에서 정의된 스탯과 특성에 따라 다르게 나타납니다.
+
+```mermaid
+classDiagram
+    class Car {
+        <<Abstract>>
+        #string name
+        #float baseSpeed
+        #float efficiency
+        #int durability
+        #int price
+        +Move(float dist) float
+        +ShowSpec() void
+        +~Car()*
+    }
+    class Bus { +ShowSpec() void }
+    class SportsCar { +ShowSpec() void }
+    class Truck { +ShowSpec() void }
+    class Sedan { +ShowSpec() void }
+
+    class WorldManager {
+        -int money
+        -int energy
+        -int day
+        -Car* currentCar
+        -vector~Car*~ garage
+        -vector~Car*~ shopList
+        +Travel(int routeIdx, string& msg) bool
+        +RestDay() void
+        +GenerateShop() void
+        +BuyCar(int idx, string& msg) bool
+    }
+
+    class UIManager {
+        -string lastLog
+        +DrawGame(WorldManager& wm) void
+        +DrawMainContent(WorldManager& wm, int mode) void
+    }
+
+    Car <|-- Bus
+    Car <|-- SportsCar
+    Car <|-- Truck
+    Car <|-- Sedan
+    WorldManager o-- Car
+    WorldManager ..> UIManager
+```
+
+### 2. Game Flowchart
+사용자의 입력에 따른 게임 흐름과 데이터 변화를 나타냅니다.
+
+```mermaid
+graph TD
+    Start([게임 시작]) --> Init[초기화: 5000G, 스타터 세단 지급]
+    Init --> Loop{메인 루프}
+    
+    Loop --> UI[대시보드 출력: 상태창 & 메뉴]
+    UI --> Input{사용자 동작 선택}
+    
+    Input -- 1. 이동 --> Route[목적지 선택]
+    Route --> Energy{에너지 체크}
+    Energy -- 충분 --> Drive[이동: 랜덤 보상 80~120% 획득, 내구도 -1]
+    Energy -- 부족 --> Log[로그: 에너지 부족!] --> Loop
+    Drive --> Destroyed{내구도 == 0?}
+    Destroyed -- 예 --> Scrap[차량 파괴 및 삭제] --> Loop
+    Destroyed -- 아니오 --> Loop
+
+    Input -- 2. 휴식 --> Refill[날짜 증가, 에너지 100%, 상점 갱신] --> Loop
+    Input -- 3. 선택 --> Garage[보유 차량 중 운행 차량 변경] --> Loop
+    Input -- 4. 상점 --> Buy{자금 체크}
+    Buy -- 성공 --> AddGarage[차고에 차량 추가] --> Loop
+    Buy -- 실패 --> Log2[로그: 자금 부족!] --> Loop
+
+    Input -- 0. 종료 --> End([메모리 해제 및 종료])
+```
+
+---
+
+## 📊 Technical Features
+
+### 1. Polymorphism (다형성)
+- `Car` 클래스의 `ShowSpec()`을 가상 함수로 정의하여, `WorldManager`가 `vector<Car*>` 내의 어떤 차량 객체든 일관된 방식으로 상세 정보를 출력할 수 있게 구현했습니다.
+- 이동 로직(`Move`)을 통해 내구도 감소 및 소요 시간 계산을 캡슐화했습니다.
+
+### 2. Factory Logic & Randomization
+- **능력치 보정**: 모든 차량은 생성 시 기본 스탯의 **0.7배 ~ 1.3배** 사이의 랜덤 보정을 받아, 같은 종류의 차량이라도 매번 다른 성능을 가집니다.
+- **이름 풀**: `WorldData.h`에 정의된 각 차량 클래스별 20개의 고유 이름 풀에서 랜덤하게 명명됩니다.
+- **가변 보상**: 이동 보상은 지역별 기본값의 **+/- 20%** 범위에서 결정되어 매 판 다른 수익을 제공합니다.
+
+### 3. Resource Management
+- **에너지 시스템**: 거리와 차량의 **연비(Efficiency)**에 따라 소요 에너지가 실시간으로 계산됩니다.
+- **내구도 시스템**: 모든 차량은 **1~3회**의 이동 기회만 가지는 소모품으로 설정되어, 플레이어에게 지속적인 차량 교체와 자금 관리의 동기를 부여합니다.
+
+---
+
+## 🚗 Vehicle Specs (Base Balance)
+
+| Type | Speed | Efficiency | Durability | Price | 특성 |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Bus** | 70 km/h | 4.0 km/E | 1~3 | 3000 G | 평균적인 속도와 가격 |
+| **SportsCar** | 140 km/h | 6.0 km/E | 1~3 | 5000 G | 매우 빠른 이동 속도 |
+| **Truck** | 60 km/h | 10.0 km/E | 1~3 | 4000 G | 압도적인 에너지 효율 |
+| **Sedan** | 90 km/h | 8.0 km/E | 1~3 | 2500 G | 저렴하고 균형 잡힌 스탯 |
+
+*모든 차량은 상점 등장 시 위 기본 수치에서 +/- 30% 보정이 적용됩니다.*
