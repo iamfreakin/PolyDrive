@@ -12,8 +12,8 @@ private:
     int day;
     std::string currentCity;
     Car* currentCar;
-    std::vector<Car*> garage;
-    std::vector<Car*> shopList;
+    std::vector<std::unique_ptr<Car>> garage;
+    std::vector<std::unique_ptr<Car>> shopList;
 
 public:
     WorldManager();
@@ -40,8 +40,8 @@ public:
     int GetDay() const { return day; }
     std::string GetCurrentCity() const { return currentCity; }
     Car* GetCurrentCar() const { return currentCar; }
-    const std::vector<Car*>& GetGarage() const { return garage; }
-    const std::vector<Car*>& GetShopList() const { return shopList; }
+    const std::vector<std::unique_ptr<Car>>& GetGarage() const { return garage; }
+    const std::vector<std::unique_ptr<Car>>& GetShopList() const { return shopList; }
     
     // 현재 도시의 경로 리스트 반환
     std::vector<Route> GetCurrentRoutes() const;
