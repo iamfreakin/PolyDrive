@@ -38,6 +38,14 @@ classDiagram
         +GetName() string
     }
 
+    class Item {
+        <<struct>>
+        +ItemType type
+        +string name
+        +int price
+        +float effectValue
+    }
+
     class WorldManager {
         -int money
         -int energy
@@ -47,11 +55,12 @@ classDiagram
         -Car* currentCar
         -vector~unique_ptr~Car~~ garage
         -vector~unique_ptr~Car~~ shopList
+        -vector~Item~ inventory
+        -vector~Item~ itemShopList
         +GenerateShop() void
-        +RestDay() void
-        +Travel(int routeIdx, string& outMsg) bool
-        +BuyCar(int shopIdx, string& outMsg) bool
-        +SelectCar(int garageIdx) void
+        +BuyItem(int idx, string& outMsg) bool
+        +UseItem(int idx, string& outMsg) bool
+        +TowingService(string& outMsg) void
     }
 
     Car <|-- Bus : 상속(Is-A)
@@ -60,12 +69,13 @@ classDiagram
     Car <|-- Sedan
     WorldManager o-- Car : 포함(Has-A)
     WorldManager o-- City : 관리
+    WorldManager o-- Item : 소유(Inventory)
     City "1" *-- "many" City : 연결(Graph)
 ```
 
 ### 핵심 포인트:
 - **Is-A 관계**: "Bus는 Car이다." (상속)
-- **Has-A 관계**: "WorldManager는 Car(들)을 가지고 있다." (포함/벡터)
+- **Has-A 관계**: "WorldManager는 Car(들)과 Item(들)을 가지고 있다." (포함/인벤토리)
 - **Graph 구조**: 도시(`City`)들은 서로를 참조하며 연결망을 형성합니다.
 
 ---
@@ -75,27 +85,21 @@ classDiagram
 
 ```mermaid
 graph TD
-    Start([게임 시작]) --> Init[초기화: 5000G, 스타터 세단 지급]
+    Start([게임 시작]) --> Init[초기화: 5000G, 스타터 세단 지급, 도시 그래프 구축]
     Init --> Loop{메인 루프}
     
-    Loop --> UI[대시보드 출력: 상태창 & 메뉴]
+    Loop --> UI[대시보드 출력: 맵, 상태창, 로그]
     UI --> Input{사용자 동작 선택}
     
-    Input -- 1. 이동 --> Route[목적지 선택]
-    Route --> Energy{에너지 체크}
-    Energy -- 충분 --> Drive[이동: 랜덤 보상 80~120% 획득, 내구도 -1]
-    Energy -- 부족 --> Log[로그: 에너지 부족!] --> Loop
-    Drive --> Destroyed{내구도 == 0?}
-    Destroyed -- 예 --> Scrap[차량 파괴 및 삭제] --> Loop
-    Destroyed -- 아니오 --> Loop
+    Input -- WASD 이동 --> Move[이동 처리: 에너지 -N, 차량 HP -1%]
+    Move --> Hazard{에너지/HP 고갈?}
+    Hazard -- 예 --> Tow[긴급 견인: 광주 이동, -1000G] --> Loop
+    Hazard -- 아니오 --> Loop
 
+    Input -- 1. 화물운송 --> Travel[이동 로직: 에너지 계산 & HP -15%] --> Loop
     Input -- 2. 휴식 --> Refill[날짜 증가, 에너지 100%, 상점 갱신] --> Loop
-    Input -- 3. 선택 --> Garage[보유 차량 중 운행 차량 변경] --> Loop
-    Input -- 4. 상점 --> Buy{자금 체크}
-    Buy -- 성공 --> AddGarage[차고에 차량 추가] --> Loop
-    Buy -- 실패 --> Log2[로그: 자금 부족!] --> Loop
-
-    Input -- 0. 종료 --> End([메모리 해제 및 종료])
+    Input -- 4. 상점 --> Shop[차량/아이템 구매] --> Loop
+    Input -- 5. 인벤토리 --> Use[아이템 사용: 에너지/HP 회복] --> Loop
 ```
 
 ---
@@ -110,6 +114,7 @@ graph TD
 5. **[06. Shop System](06_Shop_System.md)**: **상속과 다형성의 정점.** 상점에서 무작위 객체가 생성되고 관리되는 과정
 6. **[07. Troubleshooting](07_Troubleshooting.md)**: **실전 문제 해결.** 개발 중 겪은 C++ 메모리 및 설계 이슈 정리
 7. **[08. Graph System](08_Graph_System.md)**: **심화 설계.** 문자열 기반 시스템을 객체 지향적 그래프 구조로 리팩토링하는 법
+8. **[09. Item and Condition](09_Item_and_Condition.md)**: **전략적 확장.** HP 시스템과 인벤토리를 통한 리스크 관리 설계
 
 ---
 

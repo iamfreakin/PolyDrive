@@ -1,6 +1,6 @@
 # 🏎️ PolyDrive: Highway Delivery Simulator
 
-**PolyDrive**는 다양한 차량을 운전하며 도시 간 물류를 운송하고 자산을 불려 나가는 **텍스트 기반 하이웨이 시뮬레이션 게임**입니다. C++의 객체 지향 프로그래밍(OOP) 핵심 원칙인 **상속과 다형성**을 실무적인 게임 로직에 적용하여 설계되었습니다.
+**PolyDrive**는 다양한 차량을 운전하며 도시 간 물류를 운송하고 자산 불려 나가는 **텍스트 기반 하이웨이 시뮬레이션 게임**입니다. C++의 객체 지향 프로그래밍(OOP) 핵심 원칙인 **상속과 다형성**을 실무적인 게임 로직에 적용하여 설계되었습니다.
 
 ---
 # 유튜브
@@ -9,19 +9,19 @@
 
 ## 🎮 Game Overview
 
-- **목적**: 제한된 에너지와 차량 내구도를 관리하며 최대한 많은 수익을 창출하세요.
+- **목적**: 제한된 에너지와 차량 내구도(HP)를 관리하며 최대한 많은 수익을 창출하세요.
 - **핵심 루프**: 
-  1. **상점**: 랜덤하게 등장하는 6대의 차량 중 연비와 성능을 고려해 구매합니다.
-  2. **관리**: 보유한 차량 중 현재 운행할 차량을 선택합니다.
-  3. **운송**: 목적지별 거리와 에너지를 계산하여 이동하고 보상을 획득합니다.
-  4. **휴식**: 하루를 마무리하며 에너지를 충전하고 상점 물건을 갱신합니다.
+  1. **탐험**: WASD 방향키로 격자 지도를 이동하며 도시를 찾습니다.
+  2. **상점**: 차량 및 비상용 아이템(연료, 수리 키트)을 구매합니다.
+  3. **운송**: 도시 간 화물을 운송하여 보상을 획득하고 자산을 불립니다.
+  4. **관리**: 인벤토리의 아이템을 사용하여 위기 상황(에너지/HP 고갈)을 극복합니다.
 
 ---
 
 ## 🛠️ System Architecture
 
 ### 1. Class Diagram
-차량 시스템은 추상 기반 클래스인 `Car`를 중심으로 설계되었습니다. 도시 시스템은 객체 간 포인터 참조를 통한 그래프 구조로 구축되었습니다.
+차량 시스템은 추상 기반 클래스인 `Car`를 중심으로 설계되었습니다. 도시 시스템은 그래프 구조로, 아이템 시스템은 인벤토리 기반으로 구축되었습니다.
 
 ```mermaid
 classDiagram
@@ -30,50 +30,32 @@ classDiagram
         #string name
         #float baseSpeed
         #float efficiency
-        #int durability
+        #float condition
         #int price
         +Move(float dist) float
-        +ShowSpec() void const
-        +~Car()*
+        +ReduceCondition(float amount) void
+        +Repair(float amount) void
     }
-    class Bus { +ShowSpec() void const }
-    class SportsCar { +ShowSpec() void const }
-    class Truck { +ShowSpec() void const }
-    class Sedan { +ShowSpec() void const }
-
     class City {
         -string name
         -int x, y
         -vector~Route~ routes
-        +AddRoute(City* dest, float dist, int reward) void
-        +GetName() string
     }
-
+    class Item {
+        <<struct>>
+        +ItemType type
+        +string name
+        +float effectValue
+    }
     class WorldManager {
         -int money
         -int energy
-        -int day
         -City* currentCity
-        -vector~City*~ allCities
-        -Car* currentCar
         -vector~unique_ptr~Car~~ garage
-        -vector~unique_ptr~Car~~ shopList
-        +GenerateShop() void
-        +RestDay() void
-        +Travel(int routeIdx, string& outMsg) bool
-        +BuyCar(int shopIdx, string& outMsg) bool
-        +SelectCar(int garageIdx) void
-    }
-
-    class UIManager {
-        -string lastLog
-        +DrawGame(WorldManager& wm) void
-        +DrawHeader() void
-        +DrawStatus(WorldManager& wm) void
-        +DrawMenu() void
-        +DrawMainContent(WorldManager& wm, int mode) void
-        +SetLog(string msg) void
-        +ClearLog() void
+        -vector~Item~ inventory
+        +BuyItem(int idx, string& outMsg) bool
+        +UseItem(int idx, string& outMsg) bool
+        +TowingService(string& outMsg) void
     }
 
     Car <|-- Bus
@@ -82,8 +64,7 @@ classDiagram
     Car <|-- Sedan
     WorldManager o-- Car
     WorldManager o-- City
-    WorldManager ..> UIManager
-    City "1" *-- "many" City : Graph Connection
+    WorldManager o-- Item
 ```
 
 ### 2. Game Flowchart
@@ -94,24 +75,18 @@ graph TD
     Start([게임 시작]) --> Init[초기화: 5000G, 스타터 세단 지급, 도시 그래프 구축]
     Init --> Loop{메인 루프}
     
-    Loop --> UI[대시보드 출력: 상태창 & 메뉴]
+    Loop --> UI[대시보드 출력: 맵, 상태창, 로그]
     UI --> Input{사용자 동작 선택}
     
-    Input -- 1. 이동 --> Route[목적지 선택]
-    Route --> Energy{에너지 체크}
-    Energy -- 충분 --> Drive[이동: 랜덤 보상 80~120% 획득, 내구도 -1]
-    Energy -- 부족 --> Log[로그: 에너지 부족!] --> Loop
-    Drive --> Destroyed{내구도 == 0?}
-    Destroyed -- 예 --> Scrap[차량 파괴 및 삭제] --> Loop
-    Destroyed -- 아니오 --> Loop
+    Input -- WASD 이동 --> Move[이동 처리: 에너지 -N, 차량 HP -1%]
+    Move --> Hazard{에너지/HP 고갈?}
+    Hazard -- 예 --> Tow[긴급 견인: 광주 이동, -1000G] --> Loop
+    Hazard -- 아니오 --> Loop
 
+    Input -- 1. 화물운송 --> Travel[이동 로직: 에너지 계산 & HP -15%] --> Loop
     Input -- 2. 휴식 --> Refill[날짜 증가, 에너지 100%, 상점 갱신] --> Loop
-    Input -- 3. 선택 --> Garage[보유 차량 중 운행 차량 변경] --> Loop
-    Input -- 4. 상점 --> Buy{자금 체크}
-    Buy -- 성공 --> AddGarage[차고에 차량 추가] --> Loop
-    Buy -- 실패 --> Log2[로그: 자금 부족!] --> Loop
-
-    Input -- 0. 종료 --> End([메모리 해제 및 종료])
+    Input -- 4. 상점 --> Shop[차량/아이템 구매] --> Loop
+    Input -- 5. 인벤토리 --> Use[아이템 사용: 에너지/HP 회복] --> Loop
 ```
 
 ---
@@ -119,35 +94,29 @@ graph TD
 ## 📊 Technical Features
 
 ### 1. Polymorphism (다형성)
-- `Car` 클래스의 `ShowSpec()`을 가상 함수로 정의하여, `WorldManager`가 `vector<unique_ptr<Car>>` 내의 어떤 차량 객체든 일관된 방식으로 상세 정보를 출력할 수 있게 구현했습니다.
-- 이동 로직(`Move`)을 통해 내구도 감소 및 소요 시간 계산을 캡슐화했습니다.
+- `Car` 클래스의 `ShowSpec()`을 가상 함수로 정의하여, 일관된 인터페이스로 다양한 차량의 상태(HP, 연비 등)를 출력합니다.
 
-### 2. Graph Architecture (그래프 구조)
-- **Node-Edge 시스템**: 각 도시를 `City` 객체(Node)로, 경로를 `Route` 구조체(Edge)로 설계하여 동적인 도시망을 구축했습니다.
-- **포인터 참조**: 문자열 검색 대신 직접적인 메모리 주소 참조를 통해 인접 도시 정보를 즉각적으로 획득합니다.
-- **확장성**: 각 도시 객체에 좌표`(x, y)`를 부여하여 향후 격자 기반 이동 시스템으로의 확장 기반을 마련했습니다.
+### 2. Graph & Grid Architecture
+- **그래프 구조**: 도시를 객체(Node)로 연결하여 실제 지리적 연결망을 시뮬레이션합니다.
+- **격자 이동**: `MapManager`를 통해 WASD 기반의 실시간 위치 좌표 이동을 구현했습니다.
 
-### 3. Factory Logic & Randomization
-- **능력치 보정**: 모든 차량은 생성 시 기본 스탯의 **0.7배 ~ 1.3배** 사이의 랜덤 보정을 받아, 같은 종류의 차량이라도 매번 다른 성능을 가집니다.
-- **가변 보상**: 이동 보상은 지역별 기본값의 **+/- 20%** 범위에서 결정되어 매 판 다른 수익을 제공합니다.
-
-### 4. Resource Management
-- **에너지 시스템**: 거리와 차량의 **연비(Efficiency)**에 따라 소요 에너지가 실시간으로 계산됩니다.
-- **내구도 시스템**: 모든 차량은 **1~3회**의 이동 기회만 가지는 소모품으로 설정되어, 플레이어에게 지속적인 차량 교체와 자금 관리의 동기를 부여합니다.
+### 3. Risk Management (리스크 관리)
+- **HP 시스템**: 단순 횟수제가 아닌 % 기반 체력 시스템을 도입하여 세밀한 차량 관리가 필요합니다.
+- **아이템/인벤토리**: 연료 고갈이나 차량 파손에 대비한 비상 물품 구매 및 사용 시스템을 갖추고 있습니다.
+- **견인 패널티**: 자원 관리 실패 시 금전적 손실과 함께 시작 지점으로 강제 회송되는 패널티를 부여합니다.
 
 ---
 
 ## 🚗 Vehicle Specs (Base Balance)
 
-| Type | Speed | Efficiency | Durability | Price | 특성 |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **Bus** | 70 km/h | 4.0 km/E | 1~3 | 3000 G | 평균적인 속도와 가격 |
-| **SportsCar** | 140 km/h | 6.0 km/E | 1~3 | 5000 G | 매우 빠른 이동 속도 |
-| **Truck** | 60 km/h | 10.0 km/E | 1~3 | 4000 G | 압도적인 에너지 효율 |
-| **Sedan** | 90 km/h | 8.0 km/E | 1~3 | 2500 G | 저렴하고 균형 잡힌 스탯 |
+| Type | Speed | Efficiency | 특성 |
+| :--- | :--- | :--- | :--- |
+| **Bus** | 70 km/h | 4.0 km/E | 평균적인 속도와 가격 |
+| **SportsCar** | 140 km/h | 6.0 km/E | 도로 위에서 매우 빠름 |
+| **Truck** | 60 km/h | 10.0 km/E | 압도적인 에너지 효율 |
+| **Sedan** | 90 km/h | 8.0 km/E | 저렴하고 균형 잡힌 스탯 |
 
-*모든 차량은 상점 등장 시 위 기본 수치에서 +/- 30% 보정이 적용됩니다.*
-
+---
 
 ## 단계별 학습 가이드
 이 프로젝트를 깊이 있게 이해하려면 아래 순서대로 문서를 읽어보세요.
@@ -160,3 +129,4 @@ graph TD
 5. **[06. Shop System](DOCS/06_Shop_System.md)**: **상속과 다형성의 정점.** 상점에서 무작위 객체가 생성되고 관리되는 과정
 6. **[07. Troubleshooting](DOCS/07_Troubleshooting.md)**: **실전 문제 해결.** 개발 중 겪은 C++ 메모리 및 설계 이슈 정리
 7. **[08. Graph System](DOCS/08_Graph_System.md)**: **심화 설계.** 문자열 기반 시스템을 객체 지향적 그래프 구조로 리팩토링하는 법
+8. **[09. Item and Condition](DOCS/09_Item_and_Condition.md)**: **전략적 확장.** HP 시스템과 인벤토리를 통한 리스크 관리 설계
