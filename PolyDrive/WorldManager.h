@@ -4,17 +4,13 @@
 #include <memory>
 #include "Car.h"
 #include "WorldData.h"
-#include "City.h"
-#include "MapManager.h"
 
 class WorldManager {
 private:
     int money;
     int energy;
     int day;
-    City* currentCity;
-    std::vector<City*> allCities; // 모든 도시 객체 관리 (직접 해제 필요)
-    std::unique_ptr<MapManager> mapManager;
+    std::string currentCity;
     Car* currentCar;
     std::vector<std::unique_ptr<Car>> garage;
     std::vector<std::unique_ptr<Car>> shopList;
@@ -40,17 +36,13 @@ public:
 
     // Getter
     int GetMoney() const { return money; }
-    int& GetEnergyRef() { return energy; }
     int GetEnergy() const { return energy; }
     int GetDay() const { return day; }
-    City* GetCurrentCity() const { return currentCity; }
-    void SetCurrentCity(City* c) { currentCity = c; }
-    MapManager* GetMapManager() const { return mapManager.get(); }
+    std::string GetCurrentCity() const { return currentCity; }
     Car* GetCurrentCar() const { return currentCar; }
-    const std::vector<City*>& GetAllCities() const { return allCities; }
     const std::vector<std::unique_ptr<Car>>& GetGarage() const { return garage; }
     const std::vector<std::unique_ptr<Car>>& GetShopList() const { return shopList; }
     
     // 현재 도시의 경로 리스트 반환
-    const std::vector<Route>& GetCurrentRoutes() const;
+    std::vector<Route> GetCurrentRoutes() const;
 };

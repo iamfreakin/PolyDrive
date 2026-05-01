@@ -8,37 +8,8 @@
 
 WorldManager::WorldManager() 
     : money(WorldData::INITIAL_MONEY), energy(WorldData::INITIAL_ENERGY), day(1), 
-      currentCity(nullptr), currentCar(nullptr) {
+      currentCity("Gwangju"), currentCar(nullptr) {
     srand(static_cast<unsigned int>(time(NULL)));
-
-    // 1. 도시 생성
-    for (const auto& data : WorldData::CITIES) {
-        City* newCity = new City(data.name, data.x, data.y);
-        allCities.push_back(newCity);
-        if (data.name == "Gwangju") currentCity = newCity;
-    }
-
-    // 2. 도시 간 경로(Edge) 연결
-    for (const auto& rData : WorldData::ROUTES) {
-        City* from = nullptr;
-        City* to = nullptr;
-
-        for (City* c : allCities) {
-            if (c->GetName() == rData.from) from = c;
-            if (c->GetName() == rData.to) to = c;
-        }
-
-        if (from && to) {
-            from->AddRoute(to, rData.distance, rData.reward);
-        }
-    }
-
-    // 3. MapManager 초기화 (20x20)
-    mapManager = std::make_unique<MapManager>(20, 20, allCities);
-    if (currentCity) {
-        mapManager->SetPlayerPos(currentCity->GetX(), currentCity->GetY());
-    }
-
     GenerateShop();
     
     // 초기 기본 차량 지급 (Sedan)
@@ -48,13 +19,11 @@ WorldManager::WorldManager()
 }
 
 WorldManager::~WorldManager() {
-    for (City* c : allCities) {
-        delete c;
-    }
-    allCities.clear();
+    // std::unique_ptr handles memory automatically
 }
 
 void WorldManager::GenerateShop() {
+    // std::unique_ptr vectors automatically delete objects on clear()
     shopList.clear();
 
     for (int i = 0; i < 6; ++i) {
@@ -62,7 +31,7 @@ void WorldManager::GenerateShop() {
         float modifier = 0.7f + (rand() % 61) / 100.0f; // 0.7 ~ 1.3
         
         std::string name = WorldData::NAME_POOLS[type][rand() % 20];
-        int dur = (rand() % 3) + 1;
+        int dur = (rand() % 3) + 1; // 내구도 1~3
 
         std::unique_ptr<Car> newCar = nullptr;
         switch (type) {
@@ -95,10 +64,10 @@ bool WorldManager::Travel(int routeIdx, std::string& outMsg) {
         return false;
     }
 
-    const auto& routes = GetCurrentRoutes();
-    if (routeIdx < 0 || routeIdx >= (int)routes.size()) return false;
+    auto routes = GetCurrentRoutes();
+    if (routeIdx < 0 || routeIdx >= routes.size()) return false;
 
-    const Route& target = routes[routeIdx];
+    Route target = routes[routeIdx];
     int requiredEnergy = (int)(target.distance / currentCar->GetEfficiency());
 
     if (energy < requiredEnergy) {
@@ -116,7 +85,7 @@ bool WorldManager::Travel(int routeIdx, std::string& outMsg) {
     money += finalReward;
 
     currentCity = target.destination;
-    outMsg = "Arrived at " + currentCity->GetName() + "! Reward: " + std::to_string(finalReward) + "G";
+    outMsg = "Arrived at " + currentCity + "! Reward: " + std::to_string(finalReward) + "G";
 
     // 내구도 0 체크
     if (currentCar->GetDurability() <= 0) {
@@ -143,6 +112,7 @@ bool WorldManager::BuyCar(int shopIdx, std::string& outMsg) {
     money -= target->GetPrice();
     outMsg = "Purchased " + target->GetName() + "!";
     
+    // std::move transfers ownership from shopList to garage
     garage.push_back(std::move(shopList[shopIdx]));
     shopList.erase(shopList.begin() + shopIdx);
     
@@ -151,10 +121,11 @@ bool WorldManager::BuyCar(int shopIdx, std::string& outMsg) {
 
 void WorldManager::SelectCar(int garageIdx) {
     if (garageIdx >= 0 && garageIdx < (int)garage.size()) {
+        // .get() provides the raw pointer for observation without taking ownership
         currentCar = garage[garageIdx].get();
     }
 }
 
-const std::vector<Route>& WorldManager::GetCurrentRoutes() const {
-    return currentCity->GetRoutes();
+std::vector<Route> WorldManager::GetCurrentRoutes() const {
+    return WorldData::CITY_ROUTES.at(currentCity);
 }
