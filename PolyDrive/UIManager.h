@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "WorldManager.h"
 #include <string>
 
@@ -15,7 +15,7 @@ public:
     // 섹션별 출력 함수
     void DrawHeader();
     void DrawStatus(const WorldManager& wm);
-    void DrawMenu();
+    void DrawMenu(const WorldManager& wm);
     void DrawMainContent(const WorldManager& wm, int mode); // 1: Move, 3: Garage, 4: Shop
     
     // 로그 설정

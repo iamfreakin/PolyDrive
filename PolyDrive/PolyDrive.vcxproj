@@ -158,6 +158,9 @@
     <ClInclude Include="Bus.h" />
     <ClInclude Include="SportsCar.h" />
     <ClInclude Include="Truck.h" />
+    <ClInclude Include="Sedan.h" />
+    <ClInclude Include="City.h" />
+    <ClInclude Include="MapManager.h" />
     <ClInclude Include="WorldData.h" />
     <ClInclude Include="WorldManager.h" />
     <ClInclude Include="UIManager.h" />
@@ -165,6 +168,7 @@
   <ItemGroup>
     <ClCompile Include="WorldManager.cpp" />
     <ClCompile Include="UIManager.cpp" />
+    <ClCompile Include="MapManager.cpp" />
     <ClCompile Include="Main.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
