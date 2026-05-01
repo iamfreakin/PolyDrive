@@ -33,31 +33,38 @@ classDiagram
         #int durability
         #int price
         +Move(float dist) float
-        +ShowSpec() void
+        +ShowSpec() void const
         +~Car()*
     }
-    class Bus { +ShowSpec() void }
-    class SportsCar { +ShowSpec() void }
-    class Truck { +ShowSpec() void }
-    class Sedan { +ShowSpec() void }
+    class Bus { +ShowSpec() void const }
+    class SportsCar { +ShowSpec() void const }
+    class Truck { +ShowSpec() void const }
+    class Sedan { +ShowSpec() void const }
 
     class WorldManager {
         -int money
         -int energy
         -int day
+        -string currentCity
         -Car* currentCar
         -vector~Car*~ garage
         -vector~Car*~ shopList
-        +Travel(int routeIdx, string& msg) bool
-        +RestDay() void
         +GenerateShop() void
-        +BuyCar(int idx, string& msg) bool
+        +RestDay() void
+        +Travel(int routeIdx, string& outMsg) bool
+        +BuyCar(int shopIdx, string& outMsg) bool
+        +SelectCar(int garageIdx) void
     }
 
     class UIManager {
         -string lastLog
         +DrawGame(WorldManager& wm) void
+        +DrawHeader() void
+        +DrawStatus(WorldManager& wm) void
+        +DrawMenu() void
         +DrawMainContent(WorldManager& wm, int mode) void
+        +SetLog(string msg) void
+        +ClearLog() void
     }
 
     Car <|-- Bus

@@ -18,20 +18,31 @@ classDiagram
         <<Abstract>>
         #string name
         #float baseSpeed
+        #float efficiency
         #int durability
-        +Move(float dist)* float
-        +ShowSpec() void
+        #int price
+        +Move(float dist) float
+        +ShowSpec() void const
+        +~Car()*
     }
-    class Bus { +ShowSpec() override }
-    class SportsCar { +ShowSpec() override }
-    class Truck { +ShowSpec() override }
-    class Sedan { +ShowSpec() override }
+    class Bus { +ShowSpec() void const }
+    class SportsCar { +ShowSpec() void const }
+    class Truck { +ShowSpec() void const }
+    class Sedan { +ShowSpec() void const }
 
     class WorldManager {
         -int money
+        -int energy
+        -int day
+        -string currentCity
+        -Car* currentCar
         -vector~Car*~ garage
-        +Travel() bool
+        -vector~Car*~ shopList
         +GenerateShop() void
+        +RestDay() void
+        +Travel(int routeIdx, string& outMsg) bool
+        +BuyCar(int shopIdx, string& outMsg) bool
+        +SelectCar(int garageIdx) void
     }
 
     Car <|-- Bus : 상속(Is-A)
