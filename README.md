@@ -1,5 +1,3 @@
-# 02주차 과제
----
 # 🏎️ PolyDrive: Highway Delivery Simulator
 
 **PolyDrive**는 다양한 차량을 운전하며 도시 간 물류를 운송하고 자산을 불려 나가는 **텍스트 기반 하이웨이 시뮬레이션 게임**입니다. C++의 객체 지향 프로그래밍(OOP) 핵심 원칙인 **상속과 다형성**을 실무적인 게임 로직에 적용하여 설계되었습니다.
@@ -23,7 +21,7 @@
 ## 🛠️ System Architecture
 
 ### 1. Class Diagram
-차량 시스템은 추상 기반 클래스인 `Car`를 중심으로 설계되었습니다. 모든 차량은 동일한 인터페이스를 가지지만, 실제 동작은 각 자식 클래스에서 정의된 스탯과 특성에 따라 다르게 나타납니다.
+차량 시스템은 추상 기반 클래스인 `Car`를 중심으로 설계되었습니다. 도시 시스템은 객체 간 포인터 참조를 통한 그래프 구조로 구축되었습니다.
 
 ```mermaid
 classDiagram
@@ -43,14 +41,23 @@ classDiagram
     class Truck { +ShowSpec() void const }
     class Sedan { +ShowSpec() void const }
 
+    class City {
+        -string name
+        -int x, y
+        -vector~Route~ routes
+        +AddRoute(City* dest, float dist, int reward) void
+        +GetName() string
+    }
+
     class WorldManager {
         -int money
         -int energy
         -int day
-        -string currentCity
+        -City* currentCity
+        -vector~City*~ allCities
         -Car* currentCar
-        -vector~Car*~ garage
-        -vector~Car*~ shopList
+        -vector~unique_ptr~Car~~ garage
+        -vector~unique_ptr~Car~~ shopList
         +GenerateShop() void
         +RestDay() void
         +Travel(int routeIdx, string& outMsg) bool
@@ -74,7 +81,9 @@ classDiagram
     Car <|-- Truck
     Car <|-- Sedan
     WorldManager o-- Car
+    WorldManager o-- City
     WorldManager ..> UIManager
+    City "1" *-- "many" City : Graph Connection
 ```
 
 ### 2. Game Flowchart
@@ -82,7 +91,7 @@ classDiagram
 
 ```mermaid
 graph TD
-    Start([게임 시작]) --> Init[초기화: 5000G, 스타터 세단 지급]
+    Start([게임 시작]) --> Init[초기화: 5000G, 스타터 세단 지급, 도시 그래프 구축]
     Init --> Loop{메인 루프}
     
     Loop --> UI[대시보드 출력: 상태창 & 메뉴]
@@ -110,15 +119,19 @@ graph TD
 ## 📊 Technical Features
 
 ### 1. Polymorphism (다형성)
-- `Car` 클래스의 `ShowSpec()`을 가상 함수로 정의하여, `WorldManager`가 `vector<Car*>` 내의 어떤 차량 객체든 일관된 방식으로 상세 정보를 출력할 수 있게 구현했습니다.
+- `Car` 클래스의 `ShowSpec()`을 가상 함수로 정의하여, `WorldManager`가 `vector<unique_ptr<Car>>` 내의 어떤 차량 객체든 일관된 방식으로 상세 정보를 출력할 수 있게 구현했습니다.
 - 이동 로직(`Move`)을 통해 내구도 감소 및 소요 시간 계산을 캡슐화했습니다.
 
-### 2. Factory Logic & Randomization
+### 2. Graph Architecture (그래프 구조)
+- **Node-Edge 시스템**: 각 도시를 `City` 객체(Node)로, 경로를 `Route` 구조체(Edge)로 설계하여 동적인 도시망을 구축했습니다.
+- **포인터 참조**: 문자열 검색 대신 직접적인 메모리 주소 참조를 통해 인접 도시 정보를 즉각적으로 획득합니다.
+- **확장성**: 각 도시 객체에 좌표`(x, y)`를 부여하여 향후 격자 기반 이동 시스템으로의 확장 기반을 마련했습니다.
+
+### 3. Factory Logic & Randomization
 - **능력치 보정**: 모든 차량은 생성 시 기본 스탯의 **0.7배 ~ 1.3배** 사이의 랜덤 보정을 받아, 같은 종류의 차량이라도 매번 다른 성능을 가집니다.
-- **이름 풀**: `WorldData.h`에 정의된 각 차량 클래스별 20개의 고유 이름 풀에서 랜덤하게 명명됩니다.
 - **가변 보상**: 이동 보상은 지역별 기본값의 **+/- 20%** 범위에서 결정되어 매 판 다른 수익을 제공합니다.
 
-### 3. Resource Management
+### 4. Resource Management
 - **에너지 시스템**: 거리와 차량의 **연비(Efficiency)**에 따라 소요 에너지가 실시간으로 계산됩니다.
 - **내구도 시스템**: 모든 차량은 **1~3회**의 이동 기회만 가지는 소모품으로 설정되어, 플레이어에게 지속적인 차량 교체와 자금 관리의 동기를 부여합니다.
 
@@ -146,3 +159,4 @@ graph TD
 4. **[05. Game Loop](DOCS/05_Game_Loop.md)**: 매니저 클래스들이 협력하여 게임을 구동하는 원리
 5. **[06. Shop System](DOCS/06_Shop_System.md)**: **상속과 다형성의 정점.** 상점에서 무작위 객체가 생성되고 관리되는 과정
 6. **[07. Troubleshooting](DOCS/07_Troubleshooting.md)**: **실전 문제 해결.** 개발 중 겪은 C++ 메모리 및 설계 이슈 정리
+7. **[08. Graph System](DOCS/08_Graph_System.md)**: **심화 설계.** 문자열 기반 시스템을 객체 지향적 그래프 구조로 리팩토링하는 법

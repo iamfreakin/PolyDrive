@@ -30,14 +30,23 @@ classDiagram
     class Truck { +ShowSpec() void const }
     class Sedan { +ShowSpec() void const }
 
+    class City {
+        -string name
+        -int x, y
+        -vector~Route~ routes
+        +AddRoute(City* dest, float dist, int reward) void
+        +GetName() string
+    }
+
     class WorldManager {
         -int money
         -int energy
         -int day
-        -string currentCity
+        -City* currentCity
+        -vector~City*~ allCities
         -Car* currentCar
-        -vector~Car*~ garage
-        -vector~Car*~ shopList
+        -vector~unique_ptr~Car~~ garage
+        -vector~unique_ptr~Car~~ shopList
         +GenerateShop() void
         +RestDay() void
         +Travel(int routeIdx, string& outMsg) bool
@@ -50,11 +59,14 @@ classDiagram
     Car <|-- Truck
     Car <|-- Sedan
     WorldManager o-- Car : 포함(Has-A)
+    WorldManager o-- City : 관리
+    City "1" *-- "many" City : 연결(Graph)
 ```
 
 ### 핵심 포인트:
 - **Is-A 관계**: "Bus는 Car이다." (상속)
 - **Has-A 관계**: "WorldManager는 Car(들)을 가지고 있다." (포함/벡터)
+- **Graph 구조**: 도시(`City`)들은 서로를 참조하며 연결망을 형성합니다.
 
 ---
 
@@ -97,6 +109,7 @@ graph TD
 4. **[05. Game Loop](05_Game_Loop.md)**: 매니저 클래스들이 협력하여 게임을 구동하는 원리
 5. **[06. Shop System](06_Shop_System.md)**: **상속과 다형성의 정점.** 상점에서 무작위 객체가 생성되고 관리되는 과정
 6. **[07. Troubleshooting](07_Troubleshooting.md)**: **실전 문제 해결.** 개발 중 겪은 C++ 메모리 및 설계 이슈 정리
+7. **[08. Graph System](08_Graph_System.md)**: **심화 설계.** 문자열 기반 시스템을 객체 지향적 그래프 구조로 리팩토링하는 법
 
 ---
 

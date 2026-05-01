@@ -19,7 +19,7 @@ void UIManager::DrawGame(const WorldManager& wm) {
     std::cout << "----------------------------------------------------------------------\n";
 
     // 현재 위치 및 차량 정보
-    std::cout << " Current Location: " << wm.GetCurrentCity() << "\n";
+    std::cout << " Current Location: " << wm.GetCurrentCity()->GetName() << "\n";
     if (wm.GetCurrentCar()) {
         std::cout << " Current Car: " << wm.GetCurrentCar()->GetName() 
                   << " (Eff: " << wm.GetCurrentCar()->GetEfficiency() 
@@ -40,9 +40,9 @@ void UIManager::DrawMainContent(const WorldManager& wm, int mode) {
     switch (mode) {
         case 1: { // Move
             std::cout << " [ Available Routes ]\n";
-            auto routes = wm.GetCurrentRoutes();
-            for (int i = 0; i < routes.size(); ++i) {
-                std::cout << " " << i + 1 << ". To " << std::left << std::setw(10) << routes[i].destination 
+            const auto& routes = wm.GetCurrentRoutes();
+            for (int i = 0; i < (int)routes.size(); ++i) {
+                std::cout << " " << i + 1 << ". To " << std::left << std::setw(10) << routes[i].destination->GetName() 
                           << " | Dist: " << std::setw(3) << (int)routes[i].distance << "km"
                           << " | Reward: ~" << routes[i].baseReward << "G\n";
             }
