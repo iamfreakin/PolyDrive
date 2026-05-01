@@ -13,18 +13,17 @@ WorldManager::WorldManager()
     GenerateShop();
     
     // 초기 기본 차량 지급 (Sedan)
-    currentCar = new Sedan("Starter Sedan", 90.0f, 8.0f, 3, 0);
-    garage.push_back(currentCar);
+    auto starter = std::make_unique<Sedan>("Starter Sedan", 90.0f, 8.0f, 3, 0);
+    currentCar = starter.get();
+    garage.push_back(std::move(starter));
 }
 
 WorldManager::~WorldManager() {
-    for (auto car : garage) delete car;
-    for (auto car : shopList) delete car;
+    // std::unique_ptr handles memory automatically
 }
 
 void WorldManager::GenerateShop() {
-    // 기존 상점 매물 삭제
-    for (auto car : shopList) delete car;
+    // std::unique_ptr vectors automatically delete objects on clear()
     shopList.clear();
 
     for (int i = 0; i < 6; ++i) {
@@ -34,22 +33,22 @@ void WorldManager::GenerateShop() {
         std::string name = WorldData::NAME_POOLS[type][rand() % 20];
         int dur = (rand() % 3) + 1; // 내구도 1~3
 
-        Car* newCar = nullptr;
+        std::unique_ptr<Car> newCar = nullptr;
         switch (type) {
             case CarType::BUS:
-                newCar = new Bus(name, 70.0f * modifier, 4.0f * modifier, dur, (int)(3000 * modifier));
+                newCar = std::make_unique<Bus>(name, 70.0f * modifier, 4.0f * modifier, dur, (int)(3000 * modifier));
                 break;
             case CarType::SPORTSCAR:
-                newCar = new SportsCar(name, 140.0f * modifier, 6.0f * modifier, dur, (int)(5000 * modifier));
+                newCar = std::make_unique<SportsCar>(name, 140.0f * modifier, 6.0f * modifier, dur, (int)(5000 * modifier));
                 break;
             case CarType::TRUCK:
-                newCar = new Truck(name, 60.0f * modifier, 10.0f * modifier, dur, (int)(4000 * modifier));
+                newCar = std::make_unique<Truck>(name, 60.0f * modifier, 10.0f * modifier, dur, (int)(4000 * modifier));
                 break;
             case CarType::SEDAN:
-                newCar = new Sedan(name, 90.0f * modifier, 8.0f * modifier, dur, (int)(2500 * modifier));
+                newCar = std::make_unique<Sedan>(name, 90.0f * modifier, 8.0f * modifier, dur, (int)(2500 * modifier));
                 break;
         }
-        if (newCar) shopList.push_back(newCar);
+        if (newCar) shopList.push_back(std::move(newCar));
     }
 }
 
@@ -91,9 +90,10 @@ bool WorldManager::Travel(int routeIdx, std::string& outMsg) {
     // 내구도 0 체크
     if (currentCar->GetDurability() <= 0) {
         outMsg += "\n[CRITICAL] Your car has been destroyed!";
-        auto it = std::find(garage.begin(), garage.end(), currentCar);
+        auto it = std::find_if(garage.begin(), garage.end(), 
+            [this](const std::unique_ptr<Car>& p) { return p.get() == currentCar; });
+        
         if (it != garage.end()) garage.erase(it);
-        delete currentCar;
         currentCar = nullptr;
     }
 
@@ -101,24 +101,28 @@ bool WorldManager::Travel(int routeIdx, std::string& outMsg) {
 }
 
 bool WorldManager::BuyCar(int shopIdx, std::string& outMsg) {
-    if (shopIdx < 0 || shopIdx >= shopList.size()) return false;
+    if (shopIdx < 0 || shopIdx >= (int)shopList.size()) return false;
 
-    Car* target = shopList[shopIdx];
+    auto& target = shopList[shopIdx];
     if (money < target->GetPrice()) {
         outMsg = "Not enough money!";
         return false;
     }
 
     money -= target->GetPrice();
-    garage.push_back(target);
-    shopList.erase(shopList.begin() + shopIdx);
     outMsg = "Purchased " + target->GetName() + "!";
+    
+    // std::move transfers ownership from shopList to garage
+    garage.push_back(std::move(shopList[shopIdx]));
+    shopList.erase(shopList.begin() + shopIdx);
+    
     return true;
 }
 
 void WorldManager::SelectCar(int garageIdx) {
-    if (garageIdx >= 0 && garageIdx < garage.size()) {
-        currentCar = garage[garageIdx];
+    if (garageIdx >= 0 && garageIdx < (int)garage.size()) {
+        // .get() provides the raw pointer for observation without taking ownership
+        currentCar = garage[garageIdx].get();
     }
 }
 
