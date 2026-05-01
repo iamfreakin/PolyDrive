@@ -76,17 +76,20 @@ graph TD
     Init --> Loop{메인 루프}
     
     Loop --> UI[대시보드 출력: 맵, 상태창, 로그]
-    UI --> Input{사용자 동작 선택}
+    UI --> Input{사용자 입력}
     
-    Input -- WASD 이동 --> Move[이동 처리: 에너지 -N, 차량 HP -1%]
-    Move --> Hazard{에너지/HP 고갈?}
-    Hazard -- 예 --> Tow[긴급 견인: 광주 이동, -1000G] --> Loop
-    Hazard -- 아니오 --> Loop
+    Input -- "WASD (이동)" --> Move[격자 한 칸 이동: 에너지 소모 & HP -1%]
+    Move --> Hazard{에너지 <= 0 OR HP <= 0?}
+    Hazard -- "예 (고립)" --> Tow[긴급 견인 서비스: 1000G 차감, 광주 강제 귀환] --> Loop
+    Hazard -- "아니오" --> CityCheck{도시 도착?}
+    CityCheck -- "예" --> Arrive[현재 도시 활성화] --> Loop
+    CityCheck -- "아니오" --> Loop
 
-    Input -- 1. 화물운송 --> Travel[이동 로직: 에너지 계산 & HP -15%] --> Loop
-    Input -- 2. 휴식 --> Refill[날짜 증가, 에너지 100%, 상점 갱신] --> Loop
-    Input -- 4. 상점 --> Shop[차량/아이템 구매] --> Loop
-    Input -- 5. 인벤토리 --> Use[아이템 사용: 에너지/HP 회복] --> Loop
+    Input -- "1. Cargo (도시)" --> Cargo[화물 운송: 에너지 소모 & HP -15% & 보상] --> Loop
+    Input -- "2. Rest" --> Refill[날짜 증가, 에너지 100%, 상점 갱신] --> Loop
+    Input -- "4. Shop (도시)" --> Shop[차량 및 비상 아이템 구매] --> Loop
+    Input -- "5. Inv" --> Use[아이템 사용: 에너지/HP 회복] --> Loop
+    Input -- "0. Exit" --> End([게임 종료])
 ```
 
 ---
