@@ -3,11 +3,11 @@
 
 class Truck : public Car {
 public:
-    Truck(std::string n, float speed, float eff, int dur, int p)
-        : Car(n, speed, eff, dur, p) {}
+    Truck(std::string n, float speed, float eff, float cond, int p)
+        : Car(n, speed, eff, cond, p) {}
 
     void ShowSpec() const override {
-        std::cout << "[Truck] " << std::left << std::setw(12) << name;
+        std::cout << "[Truck    ]";
         Car::ShowSpec();
     }
 };
