@@ -18,12 +18,12 @@ namespace WorldData {
     };
 
     static std::vector<CityInitData> CITIES = {
-        {"Gwangju", 5, 15},
-        {"Jeonju", 5, 10},
-        {"Daejeon", 10, 8},
-        {"Busan", 18, 18},
-        {"Seoul", 8, 2},
-        {"Gangneung", 18, 3}
+        {"Gwangju", 5, 35},
+        {"Jeonju", 10, 25},
+        {"Daejeon", 20, 18},
+        {"Busan", 35, 35},
+        {"Seoul", 15, 5},
+        {"Gangneung", 35, 8}
     };
 
     // 경로 초기화 데이터 (출발지 이름, 목적지 이름, 거리, 보상)

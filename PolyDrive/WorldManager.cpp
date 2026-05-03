@@ -28,8 +28,8 @@ WorldManager::WorldManager()
         if (from && to) from->AddRoute(to, rData.distance, rData.reward);
     }
 
-    // 3. MapManager 초기화 (20x20)
-    mapManager = std::make_unique<MapManager>(20, 20, allCities);
+    // 3. MapManager 초기화 (40x40)
+    mapManager = std::make_unique<MapManager>(40, 40, allCities);
     if (currentCity) mapManager->SetPlayerPos(currentCity->GetX(), currentCity->GetY());
 
     GenerateShop();
@@ -110,8 +110,7 @@ void WorldManager::CompleteMission(std::string& outMsg) {
         int finalReward = (int)(currentMission.reward * rewardMod);
         money += finalReward;
 
-        outMsg = "\n[MISSION COMPLETE] Successfully delivered " + currentMission.cargoName + "!\n";
-        outMsg += "Reward: " + std::to_string(finalReward) + "G Received.";
+        outMsg = " [MISSION COMPLETE] Delivered " + currentMission.cargoName + "! Reward: " + std::to_string(finalReward) + "G";
         
         currentMission.isActive = false;
         currentMission.destination = nullptr;

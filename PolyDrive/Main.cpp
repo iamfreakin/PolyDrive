@@ -1,4 +1,4 @@
-﻿#include "WorldManager.h"
+#include "WorldManager.h"
 #include "UIManager.h"
 #include <iostream>
 #include <conio.h> 
@@ -10,9 +10,8 @@ int main() {
     int currentMode = 0; // 0: Map, 1: Cargo, 3: Garage, 4: Shop, 5: Inv
 
     while (choice != 0) {
-        ui.DrawGame(wm, currentMode);
-        ui.DrawMainContent(wm, currentMode);
-        ui.DrawMenu(wm);
+        // [최적화] 통합된 Render 함수 하나로 화면 출력
+        ui.Render(wm, currentMode);
         
         int input = _getch();
 
@@ -31,7 +30,7 @@ int main() {
                 currentMode = 3;
             } else if (wm.GetCurrentCar()->GetCondition() <= 0) {
                 ui.SetLog("Car is destroyed! Repair it or change car.");
-                currentMode = 5; // 인벤토리(수리) 모드로 유도
+                currentMode = 5;
             } else {
                 int result = wm.GetMapManager()->MovePlayer(dx, dy, wm.GetEnergyRef(), wm.GetCurrentCar());
                 if (result == 0) {
@@ -41,8 +40,11 @@ int main() {
                     wm.SetCurrentCity(city);
                     
                     std::string mMsg;
-                    wm.CompleteMission(mMsg); // 미션 완료 체크
-                    ui.SetLog("Arrived at " + city->GetName() + "!" + mMsg);
+                    wm.CompleteMission(mMsg);
+                    
+                    std::string logMsg = "Arrived at " + city->GetName() + "!";
+                    if (!mMsg.empty()) logMsg += mMsg;
+                    ui.SetLog(logMsg);
                     
                     currentMode = 0;
                 } else {
@@ -51,8 +53,7 @@ int main() {
                     currentMode = 0;
                 }
 
-                // 패널티 체크 (이동 후 상태 확인)
-                if (wm.GetEnergy() <= 0 || wm.GetCurrentCar()->GetCondition() <= 0) {
+                if (wm.GetEnergy() <= 0 || (wm.GetCurrentCar() && wm.GetCurrentCar()->GetCondition() <= 0)) {
                     std::string tMsg;
                     wm.TowingService(tMsg);
                     ui.SetLog(tMsg);
@@ -67,18 +68,17 @@ int main() {
         switch (choice) {
             case 1: { // Cargo (Mission Acceptance)
                 if (wm.GetCurrentCity()) {
-                    ui.DrawGame(wm, 1);
-                    ui.DrawMainContent(wm, 1);
+                    currentMode = 1;
+                    ui.Render(wm, currentMode);
                     std::cout << " Select cargo to deliver (0 to cancel): ";
                     int rIdx;
                     if (std::cin >> rIdx && rIdx > 0) {
                         std::string msg;
-                        if (wm.AcceptMission(rIdx - 1, msg)) {
-                            ui.SetLog(msg);
-                        } else {
-                            ui.SetLog("[Error] " + msg);
-                        }
+                        if (wm.AcceptMission(rIdx - 1, msg)) ui.SetLog(msg);
+                        else ui.SetLog("[Error] " + msg);
                     }
+                    std::cin.clear();
+                    std::cin.ignore(1000, '\n');
                 } else {
                     ui.SetLog("Missions can only be accepted in a city!");
                 }
@@ -92,21 +92,23 @@ int main() {
                 break;
             }
             case 3: { // Garage
-                ui.DrawGame(wm, 3);
-                ui.DrawMainContent(wm, 3);
+                currentMode = 3;
+                ui.Render(wm, currentMode);
                 std::cout << " Select car to drive (0 to cancel): ";
                 int gIdx;
                 if (std::cin >> gIdx && gIdx > 0) {
                     wm.SelectCar(gIdx - 1);
                     ui.SetLog("Car changed!");
                 }
+                std::cin.clear();
+                std::cin.ignore(1000, '\n');
                 currentMode = 0;
                 break;
             }
             case 4: { // Shop
                 if (wm.GetCurrentCity()) {
-                    ui.DrawGame(wm, 4);
-                    ui.DrawMainContent(wm, 4);
+                    currentMode = 4;
+                    ui.Render(wm, currentMode);
                     std::cout << " Buy Car(1-6) or Item(7-10) (0 to cancel): ";
                     int sIdx;
                     if (std::cin >> sIdx && sIdx > 0) {
@@ -119,6 +121,8 @@ int main() {
                             else ui.SetLog("[Error] " + msg);
                         }
                     }
+                    std::cin.clear();
+                    std::cin.ignore(1000, '\n');
                 } else {
                     ui.SetLog("Shop is only available in a city!");
                 }
@@ -126,8 +130,8 @@ int main() {
                 break;
             }
             case 5: { // Inventory
-                ui.DrawGame(wm, 5);
-                ui.DrawMainContent(wm, 5);
+                currentMode = 5;
+                ui.Render(wm, currentMode);
                 std::cout << " Select item to use (0 to cancel): ";
                 int iIdx;
                 if (std::cin >> iIdx && iIdx > 0) {
@@ -135,6 +139,8 @@ int main() {
                     if (wm.UseItem(iIdx - 1, msg)) ui.SetLog(msg);
                     else ui.SetLog("[Error] " + msg);
                 }
+                std::cin.clear();
+                std::cin.ignore(1000, '\n');
                 currentMode = 0;
                 break;
             }
