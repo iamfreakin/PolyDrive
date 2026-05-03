@@ -1,4 +1,5 @@
-#pragma once
+﻿#pragma once
+#define NOMINMAX
 #include "WorldManager.h"
 #include <string>
 #include <windows.h>
@@ -7,7 +8,19 @@ class UIManager {
 private:
     std::string lastLog;
     HANDLE hConsole;
-    int lastMode; // 이전 모드 추적용
+    int lastMode;
+
+    // ANSI 색상 코드 정의
+    const std::string RESET = "\033[0m";
+    const std::string RED = "\033[31m";
+    const std::string GREEN = "\033[32m";
+    const std::string YELLOW = "\033[33m";
+    const std::string BLUE = "\033[34m";
+    const std::string MAGENTA = "\033[35m";
+    const std::string CYAN = "\033[36m";
+    const std::string WHITE = "\033[37m";
+    const std::string BOLD = "\033[1m";
+    const std::string GRAY = "\033[90m";
 
     // 내부 유틸리티
     void SetCursor(int x, int y);
