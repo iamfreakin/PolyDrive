@@ -3,10 +3,32 @@
 #include <iomanip>
 #include <cstdlib>
 
-UIManager::UIManager() : lastLog("Welcome to PolyDrive!") {}
+UIManager::UIManager() : lastLog("Welcome to PolyDrive!"), lastMode(-1) {
+    hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    HideCursor();
+    system("cls"); // 최초 1회만 화면 초기화
+}
 
-void UIManager::DrawGame(const WorldManager& wm) {
-    system("cls");
+void UIManager::SetCursor(int x, int y) {
+    COORD coord = { (SHORT)x, (SHORT)y };
+    SetConsoleCursorPosition(hConsole, coord);
+}
+
+void UIManager::HideCursor() {
+    CONSOLE_CURSOR_INFO cursorInfo;
+    GetConsoleCursorInfo(hConsole, &cursorInfo);
+    cursorInfo.bVisible = FALSE;
+    SetConsoleCursorInfo(hConsole, &cursorInfo);
+}
+
+void UIManager::DrawGame(const WorldManager& wm, int mode) {
+    // 모드가 변경되었을 때만 화면을 지움 (잔상 제거용)
+    if (lastMode != mode) {
+        system("cls");
+        lastMode = mode;
+    }
+
+    SetCursor(0, 0); // 커서를 원점으로 이동하여 덮어쓰기 (깜빡임 방지)
     
     std::cout << "======================================================================\n";
     std::cout << "   PolyDrive - Highway Delivery Simulator\n";

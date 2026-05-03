@@ -10,7 +10,7 @@ int main() {
     int currentMode = 0; // 0: Map, 1: Cargo, 3: Garage, 4: Shop, 5: Inv
 
     while (choice != 0) {
-        ui.DrawGame(wm);
+        ui.DrawGame(wm, currentMode);
         ui.DrawMainContent(wm, currentMode);
         ui.DrawMenu(wm);
         
@@ -60,7 +60,7 @@ int main() {
         switch (choice) {
             case 1: { // Cargo
                 if (wm.GetCurrentCity()) {
-                    ui.DrawGame(wm);
+                    ui.DrawGame(wm, 1);
                     ui.DrawMainContent(wm, 1);
                     std::cout << " Select route (0 to cancel): ";
                     int rIdx;
@@ -87,7 +87,7 @@ int main() {
                 break;
             }
             case 3: { // Garage
-                ui.DrawGame(wm);
+                ui.DrawGame(wm, 3);
                 ui.DrawMainContent(wm, 3);
                 std::cout << " Select car to drive (0 to cancel): ";
                 int gIdx;
@@ -100,7 +100,7 @@ int main() {
             }
             case 4: { // Shop
                 if (wm.GetCurrentCity()) {
-                    ui.DrawGame(wm);
+                    ui.DrawGame(wm, 4);
                     ui.DrawMainContent(wm, 4);
                     std::cout << " Buy Car(1-6) or Item(7-10) (0 to cancel): ";
                     int sIdx;
@@ -121,7 +121,7 @@ int main() {
                 break;
             }
             case 5: { // Inventory
-                ui.DrawGame(wm);
+                ui.DrawGame(wm, 5);
                 ui.DrawMainContent(wm, 5);
                 std::cout << " Select item to use (0 to cancel): ";
                 int iIdx;
