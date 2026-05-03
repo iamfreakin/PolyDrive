@@ -70,7 +70,7 @@ void WorldManager::GenerateShop() {
         if (rand() % 2 == 0) {
             itemShopList.push_back({ ItemType::FUEL, "Emergency Fuel", 500, 30.0f });
         } else {
-            itemShopList.push_back({ ItemType::REPAIR_KIT, "Basic Repair Kit", 800, 25.0f });
+            itemShopList.push_back({ ItemType::REPAIR_KIT, "Basic Repair Kit", 800, 80.0f });
         }
     }
 }
