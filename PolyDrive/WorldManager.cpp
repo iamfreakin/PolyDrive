@@ -163,16 +163,32 @@ void WorldManager::TowingService(std::string& outMsg) {
     money -= 1000;
     if (money < 0) money = 0;
     
-    // Gwangju로 강제 소환
+    // 가장 가까운 도시 찾기 (유클리드 거리 계산)
+    int px = mapManager->GetPlayerX();
+    int py = mapManager->GetPlayerY();
+    City* closest = nullptr;
+    float minDist = 99999.0f;
+
     for (City* c : allCities) {
-        if (c->GetName() == "Gwangju") {
-            currentCity = c;
-            mapManager->SetPlayerPos(c->GetX(), c->GetY());
-            break;
+        float dx = (float)(c->GetX() - px);
+        float dy = (float)(c->GetY() - py);
+        float dist = std::sqrt(dx * dx + dy * dy);
+        if (dist < minDist) {
+            minDist = dist;
+            closest = c;
         }
     }
+
+    if (closest) {
+        currentCity = closest;
+        mapManager->SetPlayerPos(closest->GetX(), closest->GetY());
+        outMsg = "[TOWING] You were towed to the nearest city: " + closest->GetName() + ". (Cost: 1000G)";
+    }
+
     energy = 50; // 견인 후 약간의 에너지 지급
-    outMsg = "[TOWING] You were towed to Gwangju. (Cost: 1000G)";
+    if (currentCar && currentCar->GetCondition() <= 0) {
+        currentCar->Repair(20.0f); // 최소한의 주행 가능 상태로 수리
+    }
 }
 
 void WorldManager::SelectCar(int garageIdx) {
