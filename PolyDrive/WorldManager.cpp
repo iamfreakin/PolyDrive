@@ -81,33 +81,41 @@ void WorldManager::RestDay() {
     GenerateShop();
 }
 
-bool WorldManager::Travel(int routeIdx, std::string& outMsg) {
-    if (!currentCar) { outMsg = "No car selected!"; return false; }
+bool WorldManager::AcceptMission(int routeIdx, std::string& outMsg) {
+    if (currentMission.isActive) {
+        outMsg = "Already have an active mission!";
+        return false;
+    }
     const auto& routes = GetCurrentRoutes();
     if (routeIdx < 0 || routeIdx >= (int)routes.size()) return false;
 
     const Route& target = routes[routeIdx];
-    int requiredEnergy = (int)(target.distance / currentCar->GetEfficiency());
-    if (energy < requiredEnergy) { outMsg = "Not enough energy!"; return false; }
-
-    energy -= requiredEnergy;
-    currentCar->Move(target.distance);
-    currentCar->ReduceCondition(15.0f); // 장거리 운송 시 큰폭 감소
     
-    float rewardMod = 0.8f + (rand() % 41) / 100.0f;
-    int finalReward = (int)(target.baseReward * rewardMod);
-    money += finalReward;
+    // 화물 이름 랜덤 생성 (WorldData에서 가져와도 좋고, 여기서는 간단히 생성)
+    std::string cargoPool[] = {"Apples", "Electronics", "Medical Kits", "Spare Parts", "Luxury Goods", "Daily Supplies"};
+    currentMission.cargoName = cargoPool[rand() % 6];
+    currentMission.destination = target.destination;
+    currentMission.reward = target.baseReward;
+    currentMission.isActive = true;
 
-    currentCity = target.destination;
-    outMsg = "Arrived at " + currentCity->GetName() + "! Reward: " + std::to_string(finalReward) + "G";
-
-    if (currentCar->GetCondition() <= 0) {
-        outMsg += "\n[CRITICAL] Your car has been destroyed!";
-        auto it = std::find_if(garage.begin(), garage.end(), [this](const std::unique_ptr<Car>& p) { return p.get() == currentCar; });
-        if (it != garage.end()) garage.erase(it);
-        currentCar = nullptr;
-    }
+    outMsg = "Mission Accepted: Deliver [" + currentMission.cargoName + "] to " + currentMission.destination->GetName() + "!";
     return true;
+}
+
+void WorldManager::CompleteMission(std::string& outMsg) {
+    if (!currentMission.isActive || !currentCity) return;
+
+    if (currentCity == currentMission.destination) {
+        float rewardMod = 0.8f + (rand() % 41) / 100.0f;
+        int finalReward = (int)(currentMission.reward * rewardMod);
+        money += finalReward;
+
+        outMsg = "\n[MISSION COMPLETE] Successfully delivered " + currentMission.cargoName + "!\n";
+        outMsg += "Reward: " + std::to_string(finalReward) + "G Received.";
+        
+        currentMission.isActive = false;
+        currentMission.destination = nullptr;
+    }
 }
 
 bool WorldManager::BuyCar(int shopIdx, std::string& outMsg) {

@@ -37,6 +37,16 @@ void UIManager::DrawGame(const WorldManager& wm, int mode) {
     std::cout << " [Day " << std::setw(3) << wm.GetDay() << "] | ";
     std::cout << " [Cash: " << std::setw(6) << wm.GetMoney() << " G] | ";
     std::cout << " [Energy: " << std::setw(3) << wm.GetEnergy() << "%]\n";
+
+    // 미션 정보 출력 추가
+    const Mission& mission = wm.GetCurrentMission();
+    if (mission.isActive) {
+        std::cout << " [Active Mission] Deliver " << mission.cargoName 
+                  << " to " << mission.destination->GetName() << "!\n";
+    } else {
+        std::cout << " [Active Mission] NONE (Visit a city to accept a mission)\n";
+    }
+
     std::cout << "----------------------------------------------------------------------\n";
 
     std::cout << " Current Location: " << (wm.GetCurrentCity() ? wm.GetCurrentCity()->GetName() : "On the Road") << "\n";

@@ -29,6 +29,9 @@ int main() {
             if (!wm.GetCurrentCar()) {
                 ui.SetLog("Select a car first to move!");
                 currentMode = 3;
+            } else if (wm.GetCurrentCar()->GetCondition() <= 0) {
+                ui.SetLog("Car is destroyed! Repair it or change car.");
+                currentMode = 5; // 인벤토리(수리) 모드로 유도
             } else {
                 int result = wm.GetMapManager()->MovePlayer(dx, dy, wm.GetEnergyRef(), wm.GetCurrentCar());
                 if (result == 0) {
@@ -36,7 +39,11 @@ int main() {
                 } else if (result == 2) {
                     City* city = wm.GetMapManager()->GetCityAtPlayer();
                     wm.SetCurrentCity(city);
-                    ui.SetLog("Arrived at " + city->GetName() + "!");
+                    
+                    std::string mMsg;
+                    wm.CompleteMission(mMsg); // 미션 완료 체크
+                    ui.SetLog("Arrived at " + city->GetName() + "!" + mMsg);
+                    
                     currentMode = 0;
                 } else {
                     wm.SetCurrentCity(nullptr);
@@ -58,24 +65,22 @@ int main() {
         choice = input - '0';
 
         switch (choice) {
-            case 1: { // Cargo
+            case 1: { // Cargo (Mission Acceptance)
                 if (wm.GetCurrentCity()) {
                     ui.DrawGame(wm, 1);
                     ui.DrawMainContent(wm, 1);
-                    std::cout << " Select route (0 to cancel): ";
+                    std::cout << " Select cargo to deliver (0 to cancel): ";
                     int rIdx;
                     if (std::cin >> rIdx && rIdx > 0) {
                         std::string msg;
-                        if (wm.Travel(rIdx - 1, msg)) {
-                            City* newCity = wm.GetCurrentCity();
-                            wm.GetMapManager()->SetPlayerPos(newCity->GetX(), newCity->GetY());
+                        if (wm.AcceptMission(rIdx - 1, msg)) {
                             ui.SetLog(msg);
                         } else {
                             ui.SetLog("[Error] " + msg);
                         }
                     }
                 } else {
-                    ui.SetLog("Cargo can only be picked up in a city!");
+                    ui.SetLog("Missions can only be accepted in a city!");
                 }
                 currentMode = 0;
                 break;

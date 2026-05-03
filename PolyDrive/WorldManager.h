@@ -8,6 +8,13 @@
 #include "MapManager.h"
 #include "Item.h"
 
+struct Mission {
+    City* destination = nullptr;
+    int reward = 0;
+    std::string cargoName = "";
+    bool isActive = false;
+};
+
 class WorldManager {
 private:
     int money;
@@ -24,13 +31,20 @@ private:
     std::vector<Item> inventory;
     std::vector<Item> itemShopList;
 
+    Mission currentMission; // 현재 배달 미션
+
 public:
     WorldManager();
     ~WorldManager();
 
     void GenerateShop();
     void RestDay();
-    bool Travel(int routeIdx, std::string& outMsg);
+    
+    // 미션 관련
+    bool AcceptMission(int routeIdx, std::string& outMsg);
+    void CompleteMission(std::string& outMsg);
+    const Mission& GetCurrentMission() const { return currentMission; }
+
     bool BuyCar(int shopIdx, std::string& outMsg);
     void SelectCar(int garageIdx);
 
