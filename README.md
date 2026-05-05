@@ -1,135 +1,93 @@
-# 🏎️ PolyDrive: Highway Delivery Simulator
+# 🏎️ PolyDrive: Modern C++ Logistics Simulator
 
-**PolyDrive**는 다양한 차량을 운전하며 도시 간 물류를 운송하고 자산 불려 나가는 **텍스트 기반 하이웨이 시뮬레이션 게임**입니다. C++의 객체 지향 프로그래밍(OOP) 핵심 원칙인 **상속과 다형성**을 실무적인 게임 로직에 적용하여 설계되었습니다.
-
----
-# 유튜브
-[![유튜브 영상](http://img.youtube.com/vi/k-Gc-b3v4RA/0.jpg)](https://www.youtube.com/watch?v=k-Gc-b3v4RA) 
----
-
-## 🎮 Game Overview
-
-- **목적**: 제한된 에너지와 차량 내구도(HP)를 관리하며 최대한 많은 수익을 창출하세요.
-- **핵심 루프**: 
-  1. **탐험**: WASD 방향키로 격자 지도를 이동하며 도시를 찾습니다.
-  2. **상점**: 차량 및 비상용 아이템(연료, 수리 키트)을 구매합니다.
-  3. **운송**: 도시 간 화물을 운송하여 보상을 획득하고 자산을 불립니다.
-  4. **관리**: 인벤토리의 아이템을 사용하여 위기 상황(에너지/HP 고갈)을 극복합니다.
+**PolyDrive**는 현대적인 C++ 기술을 활용하여 제작된 그리드 기반 물류 시뮬레이션 게임입니다. 대한민국 주요 도시를 배경으로 한 가상의 맵에서 다양한 차량을 운전하며 화물을 배송하고, 자산을 관리하여 최고의 운송업자가 되는 것을 목표로 합니다.
 
 ---
 
-## 🛠️ System Architecture
+## 📂 1. Module Architecture & File Map (기능별 파일 구조)
 
-### 1. Class Diagram
-차량 시스템은 추상 기반 클래스인 `Car`를 중심으로 설계되었습니다. 도시 시스템은 그래프 구조로, 아이템 시스템은 인벤토리 기반으로 구축되었습니다.
+이 프로젝트는 기능적 역할에 따라 모듈이 엄격히 분리되어 있습니다. 각 기능이 구현된 위치는 다음과 같습니다.
 
-```mermaid
-classDiagram
-    class Car {
-        <<Abstract>>
-        #string name
-        #float baseSpeed
-        #float efficiency
-        #float condition
-        #int price
-        +Move(float dist) float
-        +ReduceCondition(float amount) void
-        +Repair(float amount) void
-    }
-    class City {
-        -string name
-        -int x, y
-        -vector~Route~ routes
-    }
-    class Item {
-        <<struct>>
-        +ItemType type
-        +string name
-        +float effectValue
-    }
-    class WorldManager {
-        -int money
-        -int energy
-        -City* currentCity
-        -vector~unique_ptr~Car~~ garage
-        -vector~Item~ inventory
-        +BuyItem(int idx, string& outMsg) bool
-        +UseItem(int idx, string& outMsg) bool
-        +TowingService(string& outMsg) void
-    }
+### 🎮 Core Logic (커널 및 제어)
+| 파일명 | 역할 및 주요 기능 | 핵심 로직 |
+| :--- | :--- | :--- |
+| **`Main.cpp`** | 게임 엔트리 포인트 및 메인 루프 | 사용자 입력 처리(`_getch`), 프레임 제어, 전역 상태 전이 |
+| **`WorldManager.h/cpp`** | 게임의 '두뇌' 역할 (State Machine) | 자산 관리, 날짜 시스템, 미션 수락/완료 로직, 수리 및 견인 서비스 |
+| **`MapManager.h/cpp`** | 좌표 및 물리 엔진 | 그리드 기반 플레이어 좌표 관리, 이동 가능 여부 체크, 도시 충돌 판정 |
 
-    Car <|-- Bus
-    Car <|-- SportsCar
-    Car <|-- Truck
-    Car <|-- Sedan
-    WorldManager o-- Car
-    WorldManager o-- City
-    WorldManager o-- Item
-```
+### 🚛 Vehicle System (차량 및 다형성)
+| 파일명 | 역할 및 주요 기능 | 핵심 로직 |
+| :--- | :--- | :--- |
+| **`Car.h`** | 차량 최상위 추상 클래스 | 내구도(`condition`) 관리, 이동 시 자원 소모 인터페이스 정의 |
+| **`Sedan/Bus/Truck/SportsCar.h`** | 개별 차량 구체 클래스 | 각 차량 타입별 고유 스펙(속도, 효율) 및 특화 로직 |
 
-### 2. Game Flowchart
-사용자의 입력에 따른 게임 흐름과 데이터 변화를 나타냅니다.
+### 🗺️ World Data & Environment (데이터 및 환경)
+| 파일명 | 역할 및 주요 기능 | 핵심 로직 |
+| :--- | :--- | :--- |
+| **`City.h`** | 도시(Node) 및 경로(Edge) 정의 | 도시 간 거리 정보 및 그래프 구조 데이터 관리 |
+| **`WorldData.h`** | 게임 내 모든 상수 및 데이터 풀 | 도시 좌표 리스트, 차량 이름 풀(`NAME_POOLS`), 초기 자산 설정 |
+| **`Item.h`** | 소비 아이템 정의 | 연료, 수리 키트 등 아이템 타입 및 효과 정의 |
 
-```mermaid
-graph TD
-    Start([게임 시작]) --> Init[초기화: 5000G, 스타터 세단 지급, 도시 그래프 구축]
-    Init --> Loop{메인 루프}
-    
-    Loop --> UI[대시보드 출력: 맵, 상태창, 로그]
-    UI --> Input{사용자 입력}
-    
-    Input -- "WASD (이동)" --> Move[격자 한 칸 이동: 에너지 소모 & HP -1%]
-    Move --> Hazard{에너지 <= 0 OR HP <= 0?}
-    Hazard -- "예 (고립)" --> Tow[긴급 견인 서비스: 1000G 차감, 광주 강제 귀환] --> Loop
-    Hazard -- "아니오" --> CityCheck{도시 도착?}
-    CityCheck -- "예" --> Arrive[현재 도시 활성화] --> Loop
-    CityCheck -- "아니오" --> Loop
-
-    Input -- "1. Cargo (도시)" --> Cargo[화물 운송: 에너지 소모 & HP -15% & 보상] --> Loop
-    Input -- "2. Rest" --> Refill[날짜 증가, 에너지 100%, 상점 갱신] --> Loop
-    Input -- "4. Shop (도시)" --> Shop[차량 및 비상 아이템 구매] --> Loop
-    Input -- "5. Inv" --> Use[아이템 사용: 에너지/HP 회복] --> Loop
-    Input -- "0. Exit" --> End([게임 종료])
-```
+### 🖥️ Visualization (렌더링)
+| 파일명 | 역할 및 주요 기능 | 핵심 로직 |
+| :--- | :--- | :--- |
+| **`UIManager.h/cpp`** | 콘솔 렌더링 엔진 | ANSI Escape Code 기반 색상 출력, 화면 부분 갱신(Cursor Control), 로그 시스템 |
 
 ---
 
-## 📊 Technical Features
+## 🛠️ 2. Technical Deep Dive (핵심 기술 구현 상세)
 
-### 1. Polymorphism (다형성)
-- `Car` 클래스의 `ShowSpec()`을 가상 함수로 정의하여, 일관된 인터페이스로 다양한 차량의 상태(HP, 연비 등)를 출력합니다.
+### 🧬 Polymorphic Vehicle Management (다형성 및 메모리 관리)
+- **RAII 패턴**: `WorldManager`는 `std::vector<std::unique_ptr<Car>>`를 사용하여 차량의 생명주기를 관리합니다. 이는 메모리 누수를 방지하고 객체 소유권을 명확히 합니다.
+- **Dynamic Spec Generation**: 차량 구매 시 `WorldData`의 베이스 스펙에 무작위 배율(`0.7f ~ 1.3f`)을 적용하여 매번 다른 성능의 차량이 상점에 등장합니다.
 
-### 2. Graph & Grid Architecture
-- **그래프 구조**: 도시를 객체(Node)로 연결하여 실제 지리적 연결망을 시뮬레이션합니다.
-- **격자 이동**: `MapManager`를 통해 WASD 기반의 실시간 위치 좌표 이동을 구현했습니다.
+### 🧭 Hybrid Movement System (그리드-그래프 하이브리드)
+- **Local Grid**: 플레이어는 40x40 그리드 위에서 자유롭게 이동합니다 (`MapManager`).
+- **Global Graph**: 도시 간의 거리는 유클리드 거리가 아닌 `WorldData::ROUTES`에 정의된 그래프 가중치를 기반으로 미션 보상이 산정됩니다.
+- **Cost Calculation**: 이동 한 칸당 소모되는 에너지는 `ceil(10.0 / car->Efficiency)` 공식을 따르며, 이는 효율이 낮은 차량일수록 급격한 에너지 소모를 유발합니다.
 
-### 3. Risk Management (리스크 관리)
-- **HP 시스템**: 단순 횟수제가 아닌 % 기반 체력 시스템을 도입하여 세밀한 차량 관리가 필요합니다.
-- **아이템/인벤토리**: 연료 고갈이나 차량 파손에 대비한 비상 물품 구매 및 사용 시스템을 갖추고 있습니다.
-- **견인 패널티**: 자원 관리 실패 시 금전적 손실과 함께 시작 지점으로 강제 회송되는 패널티를 부여합니다.
-
----
-
-## 🚗 Vehicle Specs (Base Balance)
-
-| Type | Speed | Efficiency | 특성 |
-| :--- | :--- | :--- | :--- |
-| **Bus** | 70 km/h | 4.0 km/E | 평균적인 속도와 가격 |
-| **SportsCar** | 140 km/h | 6.0 km/E | 도로 위에서 매우 빠름 |
-| **Truck** | 60 km/h | 10.0 km/E | 압도적인 에너지 효율 |
-| **Sedan** | 90 km/h | 8.0 km/E | 저렴하고 균형 잡힌 스탯 |
+### 🎨 State-Based Rendering Engine
+- **Flicker Reduction**: `system("cls")` 사용을 지양하고, `UIManager`에서 Windows API의 `SetConsoleCursorPosition`을 활용하여 변경된 부분만 덮어씌우는 방식으로 렌더링 최적화를 진행 중입니다.
+- **ANSI Styling**: `\033[...m` 코드를 사용하여 별도의 라이브러리 없이 풍부한 색상과 강조 효과를 구현했습니다.
 
 ---
 
-## 단계별 학습 가이드
-이 프로젝트를 깊이 있게 이해하려면 아래 순서대로 문서를 읽어보세요.
+## 📈 3. Economic Logic (경제 시스템 상세)
 
-0. **[01. Overview](DOCS/01_Overview.md)**: PolyDrive 전체 구조 및 OOP 설계
-1. **[02. Car Class](DOCS/02_Car_Class.md)**: 모든 차량의 근간이 되는 추상 기반 클래스 설계
-2. **[03. Inheritance](DOCS/03_Inheritance.md)**: 자식 클래스에서 부모의 기능을 확장하고 재정의하는 법
-3. **[04. Vector Management](DOCS/04_Vector_Management.md)**: 동적 할당된 객체들을 안전하게 관리하고 해제하는 기술
-4. **[05. Game Loop](DOCS/05_Game_Loop.md)**: 매니저 클래스들이 협력하여 게임을 구동하는 원리
-5. **[06. Shop System](DOCS/06_Shop_System.md)**: **상속과 다형성의 정점.** 상점에서 무작위 객체가 생성되고 관리되는 과정
-6. **[07. Troubleshooting](DOCS/07_Troubleshooting.md)**: **실전 문제 해결.** 개발 중 겪은 C++ 메모리 및 설계 이슈 정리
-7. **[08. Graph System](DOCS/08_Graph_System.md)**: **심화 설계.** 문자열 기반 시스템을 객체 지향적 그래프 구조로 리팩토링하는 법
-8. **[09. Item and Condition](DOCS/09_Item_and_Condition.md)**: **전략적 확장.** HP 시스템과 인벤토리를 통한 리스크 관리 설계
+### 📦 Mission Algorithm
+1. **Trigger**: 도시 도착 시 해당 도시에서 출발하는 `Route` 데이터 중 하나를 무작위로 선택하여 미션을 생성합니다.
+2. **Reward**: `Base Reward` × `Random Multiplier(0.8 ~ 1.2)`를 통해 보상이 결정됩니다.
+3. **The Golden Cargo**: 플레이어 자산이 50,000G에 도달하면, 현재 위치에서 가장 멀리 떨어진 도시를 목적지로 하는 최종 클리어 미션이 자동 활성화됩니다.
+
+### 🚨 Penalty System
+- **Towing Service**: 고립 상황(에너지 0 또는 내구도 0) 발생 시 `TowingService()`가 호출됩니다.
+- **Logic**: 현재 좌표에서 가장 가까운 도시를 검색하여 강제 소환하며, 패널티 금액 차감 후 차량을 최소 운행 가능 상태(내구도 20%)로 긴급 복구합니다.
+
+---
+
+## 🚀 4. Expansion Guide (시스템 확장 방법)
+
+본 프로젝트는 **Open-Closed Principle (OCP)**을 준수하여 설계되었습니다.
+
+1. **새로운 차량 추가**: `Car` 클래스를 상속받는 새로운 헤더 파일을 만들고, `WorldManager::GenerateShop`에 타입만 등록하면 즉시 적용됩니다.
+2. **맵 확장**: `WorldData.h`의 `CITIES` 리스트에 새 좌표를 추가하는 것만으로 맵 크기나 도시 배치를 변경할 수 있습니다.
+3. **아이템 효과 변경**: `Item.h`의 `ItemType`과 `WorldManager::UseItem`의 switch-case 문을 수정하여 새로운 소모품 기능을 추가할 수 있습니다.
+
+---
+
+## ⌨️ 5. Control Reference (상세 조작 가이드)
+
+| Key | Mode | Action |
+| :--- | :--- | :--- |
+| **W, A, S, D** | Field | 상/하/좌/우 이동 (에너지 및 내구도 소모) |
+| **1** | City | 화물 수송 미션 수락 (목적지 및 보상 확인) |
+| **2** | Any | 휴식 (에너지 100% 회복, 날짜 +1, 상점 목록 갱신) |
+| **3** | Any | 가라지 진입 (보유한 차량 중 운전할 차량 선택) |
+| **4** | City | 상점 진입 (차량 구매 및 소모품 보충) |
+| **5** | Any | 인벤토리 열기 (연료 보충, 긴급 수리 키트 사용) |
+| **6** | City | 전문 수리소 (자금을 소모하여 차량 내구도 100% 복구) |
+| **0** | Any | 게임 저장 및 종료 |
+
+---
+
+*Copyright © 2024 PolyDrive Team. Built with Passion for C++.*
