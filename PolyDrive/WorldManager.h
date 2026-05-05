@@ -13,6 +13,15 @@ struct Mission {
     int reward = 0;
     std::string cargoName = "";
     bool isActive = false;
+    bool isFinal = false; // 최종 미션 여부
+};
+
+struct ScoreResult {
+    int totalScore;
+    int days;
+    int repairs;
+    int carsOwned;
+    std::string rank;
 };
 
 class WorldManager {
@@ -20,6 +29,10 @@ private:
     int money;
     int energy;
     int day;
+    int totalRepairs; // 총 견인/수리 횟수
+    bool gameCleared; // 게임 클리어 여부
+    ScoreResult finalScore;
+
     City* currentCity;
     std::vector<City*> allCities; 
     std::unique_ptr<MapManager> mapManager;
@@ -44,22 +57,33 @@ public:
     bool AcceptMission(int routeIdx, std::string& outMsg);
     void CompleteMission(std::string& outMsg);
     const Mission& GetCurrentMission() const { return currentMission; }
+    
+    // 최종 미션 트리거 확인
+    bool CheckFinalMissionTrigger();
+    void TriggerFinalMission();
 
     bool BuyCar(int shopIdx, std::string& outMsg);
     void SelectCar(int garageIdx);
 
-    // 아이템 관련 메서드
+    // 아이템 및 수리 관련 메서드
     bool BuyItem(int itemIdx, std::string& outMsg);
     bool UseItem(int invIdx, std::string& outMsg);
+    bool RepairAtCity(std::string& outMsg); // 도시 수리점 서비스 추가
     
     // 패널티 처리 (견인)
     void TowingService(std::string& outMsg);
+
+    // 점수 계산
+    void CalculateFinalScore();
+    const ScoreResult& GetFinalScore() const { return finalScore; }
+    bool IsGameCleared() const { return gameCleared; }
 
     // Getter
     int GetMoney() const { return money; }
     int& GetEnergyRef() { return energy; }
     int GetEnergy() const { return energy; }
     int GetDay() const { return day; }
+    int GetTotalRepairs() const { return totalRepairs; }
     City* GetCurrentCity() const { return currentCity; }
     void SetCurrentCity(City* c) { currentCity = c; }
     MapManager* GetMapManager() const { return mapManager.get(); }

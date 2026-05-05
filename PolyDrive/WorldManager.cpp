@@ -1,15 +1,17 @@
-#include "WorldManager.h"
+﻿#include "WorldManager.h"
 #include "Bus.h"
 #include "SportsCar.h"
 #include "Truck.h"
 #include "Sedan.h"
 #include <algorithm>
 #include <ctime>
+#include <cmath>
 
 WorldManager::WorldManager() 
     : money(WorldData::INITIAL_MONEY), energy(WorldData::INITIAL_ENERGY), day(1), 
-      currentCity(nullptr), currentCar(nullptr) {
+      totalRepairs(0), gameCleared(false), currentCity(nullptr), currentCar(nullptr) {
     srand(static_cast<unsigned int>(time(NULL)));
+    finalScore = { 0, 0, 0, 0, "" };
 
     // 1. 도시 생성
     for (const auto& data : WorldData::CITIES) {
@@ -91,12 +93,12 @@ bool WorldManager::AcceptMission(int routeIdx, std::string& outMsg) {
 
     const Route& target = routes[routeIdx];
     
-    // 화물 이름 랜덤 생성 (WorldData에서 가져와도 좋고, 여기서는 간단히 생성)
     std::string cargoPool[] = {"Apples", "Electronics", "Medical Kits", "Spare Parts", "Luxury Goods", "Daily Supplies"};
     currentMission.cargoName = cargoPool[rand() % 6];
     currentMission.destination = target.destination;
     currentMission.reward = target.baseReward;
     currentMission.isActive = true;
+    currentMission.isFinal = false;
 
     outMsg = "Mission Accepted: Deliver [" + currentMission.cargoName + "] to " + currentMission.destination->GetName() + "!";
     return true;
@@ -106,14 +108,45 @@ void WorldManager::CompleteMission(std::string& outMsg) {
     if (!currentMission.isActive || !currentCity) return;
 
     if (currentCity == currentMission.destination) {
-        float rewardMod = 0.8f + (rand() % 41) / 100.0f;
-        int finalReward = (int)(currentMission.reward * rewardMod);
-        money += finalReward;
-
-        outMsg = " [MISSION COMPLETE] Delivered " + currentMission.cargoName + "! Reward: " + std::to_string(finalReward) + "G";
-        
+        if (currentMission.isFinal) {
+            gameCleared = true;
+            CalculateFinalScore();
+            outMsg = " [★ GAME CLEAR ★] You've completed the Final Mission!";
+        } else {
+            float rewardMod = 0.8f + (rand() % 41) / 100.0f;
+            int finalReward = (int)(currentMission.reward * rewardMod);
+            money += finalReward;
+            outMsg = " [MISSION COMPLETE] Delivered " + currentMission.cargoName + "! Reward: " + std::to_string(finalReward) + "G";
+        }
         currentMission.isActive = false;
         currentMission.destination = nullptr;
+    }
+}
+
+bool WorldManager::CheckFinalMissionTrigger() {
+    return (money >= 50000 && !currentMission.isActive && !gameCleared);
+}
+
+void WorldManager::TriggerFinalMission() {
+    City* furthest = nullptr;
+    float maxDist = -1.0f;
+    for (City* c : allCities) {
+        if (c == currentCity) continue;
+        float dx = (float)(c->GetX() - currentCity->GetX());
+        float dy = (float)(c->GetY() - currentCity->GetY());
+        float dist = std::sqrt(dx * dx + dy * dy);
+        if (dist > maxDist) {
+            maxDist = dist;
+            furthest = c;
+        }
+    }
+
+    if (furthest) {
+        currentMission.cargoName = "THE GOLDEN CARGO";
+        currentMission.destination = furthest;
+        currentMission.reward = 0;
+        currentMission.isActive = true;
+        currentMission.isFinal = true;
     }
 }
 
@@ -159,11 +192,27 @@ bool WorldManager::UseItem(int invIdx, std::string& outMsg) {
     return true;
 }
 
+bool WorldManager::RepairAtCity(std::string& outMsg) {
+    if (!currentCity) { outMsg = "Repair is only available in a city!"; return false; }
+    if (!currentCar) { outMsg = "No car to repair!"; return false; }
+    
+    float damage = 100.0f - currentCar->GetCondition();
+    if (damage <= 0.1f) { outMsg = "Your car is already in perfect condition!"; return false; }
+    
+    int cost = (int)(damage * 25); // 1%당 25G (수리키트보다 비싸지만 확실함)
+    if (money < cost) { outMsg = "Not enough money! (Required: " + std::to_string(cost) + "G)"; return false; }
+    
+    money -= cost;
+    currentCar->Repair(100.0f);
+    outMsg = "Car fully repaired! (Cost: " + std::to_string(cost) + "G)";
+    return true;
+}
+
 void WorldManager::TowingService(std::string& outMsg) {
     money -= 1000;
     if (money < 0) money = 0;
+    totalRepairs++;
     
-    // 가장 가까운 도시 찾기 (유클리드 거리 계산)
     int px = mapManager->GetPlayerX();
     int py = mapManager->GetPlayerY();
     City* closest = nullptr;
@@ -185,10 +234,30 @@ void WorldManager::TowingService(std::string& outMsg) {
         outMsg = "[TOWING] You were towed to the nearest city: " + closest->GetName() + ". (Cost: 1000G)";
     }
 
-    energy = 50; // 견인 후 약간의 에너지 지급
+    energy = 50;
     if (currentCar && currentCar->GetCondition() <= 0) {
-        currentCar->Repair(20.0f); // 최소한의 주행 가능 상태로 수리
+        currentCar->Repair(20.0f);
     }
+}
+
+void WorldManager::CalculateFinalScore() {
+    int score = 10000;
+    score -= (day * 100);
+    score -= (totalRepairs * 500);
+    score += ((int)garage.size() * 1000);
+
+    if (score < 0) score = 0;
+
+    finalScore.totalScore = score;
+    finalScore.days = day;
+    finalScore.repairs = totalRepairs;
+    finalScore.carsOwned = (int)garage.size();
+
+    if (score >= 9000) finalScore.rank = "S (GOD DRIVER)";
+    else if (score >= 7000) finalScore.rank = "A (EXPERT)";
+    else if (score >= 5000) finalScore.rank = "B (PRO)";
+    else if (score >= 3000) finalScore.rank = "C (ROOKIE)";
+    else finalScore.rank = "F (TOWING LOVER)";
 }
 
 void WorldManager::SelectCar(int garageIdx) {

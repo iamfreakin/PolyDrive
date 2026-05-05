@@ -10,6 +10,31 @@ int main() {
     int currentMode = 0; // 0: Map, 1: Cargo, 3: Garage, 4: Shop, 5: Inv
 
     while (choice != 0) {
+        // [최종 미션 트리거 확인]
+        if (wm.CheckFinalMissionTrigger()) {
+            wm.TriggerFinalMission();
+            ui.SetLog(BOLD + YELLOW + "!!! [SPECIAL MISSION] THE GOLDEN CARGO IS AVAILABLE !!!" + RESET);
+        }
+
+        // [게임 클리어 확인]
+        if (wm.IsGameCleared()) {
+            system("cls");
+            const auto& score = wm.GetFinalScore();
+            std::cout << "\n\n";
+            std::cout << "  " << YELLOW << BOLD << "====================================================" << RESET << "\n";
+            std::cout << "  " << WHITE << BOLD << "              MISSION ACCOMPLISHED!                " << RESET << "\n";
+            std::cout << "  " << YELLOW << BOLD << "====================================================" << RESET << "\n\n";
+            std::cout << "   - Total Score  : " << GREEN << BOLD << score.totalScore << RESET << " pts\n";
+            std::cout << "   - Days Taken   : " << score.days << " days\n";
+            std::cout << "   - Total Repairs: " << score.repairs << " times\n";
+            std::cout << "   - Cars Owned   : " << score.carsOwned << " cars\n\n";
+            std::cout << "   - FINAL RANK   : " << CYAN << BOLD << score.rank << RESET << "\n\n";
+            std::cout << "  " << GRAY << "====================================================" << RESET << "\n";
+            std::cout << "   Press any key to exit the game...";
+            _getch();
+            break;
+        }
+
         // [최적화] 통합된 Render 함수 하나로 화면 출력
         ui.Render(wm, currentMode);
         
@@ -141,6 +166,13 @@ int main() {
                 }
                 std::cin.clear();
                 std::cin.ignore(1000, '\n');
+                currentMode = 0;
+                break;
+            }
+            case 6: { // Repair (City Service)
+                std::string msg;
+                if (wm.RepairAtCity(msg)) ui.SetLog(msg);
+                else ui.SetLog("[Error] " + msg);
                 currentMode = 0;
                 break;
             }
