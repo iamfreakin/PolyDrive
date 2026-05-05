@@ -76,7 +76,7 @@ void UIManager::Render(const WorldManager& wm, int mode) {
     int px = mm->GetPlayerX();
     int py = mm->GetPlayerY();
     
-    int camSize = 21;
+    int camSize = 21; // 21x21 사이즈 유지
     int halfCam = camSize / 2;
     int startX = std::max(0, std::min(px - halfCam, mm->GetWidth() - camSize));
     int startY = std::max(0, std::min(py - halfCam, mm->GetHeight() - camSize));
@@ -161,10 +161,16 @@ void UIManager::Render(const WorldManager& wm, int mode) {
         rightPane.push_back(line);
     }
 
-    // 3. 결합 및 출력 (충분한 높이 확보: 40줄)
+    // 3. 결합 및 출력
+    // 하단 불필요한 빈 줄 제거
+    while (!leftPane.empty() && GetPlainLength(leftPane.back()) == 0) leftPane.pop_back();
+    while (!rightPane.empty() && GetPlainLength(rightPane.back()) == 0) rightPane.pop_back();
+
     SetCursor(0, 0);
     std::ostringstream combined;
-    for (size_t i = 0; i < 40; ++i) {
+    size_t maxRows = std::max(leftPane.size(), rightPane.size());
+    
+    for (size_t i = 0; i < maxRows; ++i) {
         // 좌측
         std::string left = (i < leftPane.size()) ? leftPane[i] : "";
         combined << left;
@@ -172,41 +178,40 @@ void UIManager::Render(const WorldManager& wm, int mode) {
         int lpLen = GetPlainLength(left);
         for(int j = 0; j < (50 - lpLen); ++j) combined << " ";
 
-        // 구분선
+        // 구분선 (둘 중 하나라도 내용이 있는 줄에만 출력)
         combined << " | ";
 
         // 우측
         std::string right = (i < rightPane.size()) ? rightPane[i] : "";
         combined << right;
 
-        // 우측 잔상 제거용 패딩 (가로 120칸 정도 더 채움)
+        // 우측 잔상 제거용 패딩
         int rpLen = GetPlainLength(right);
         for(int j = 0; j < (120 - rpLen); ++j) combined << " ";
         
         combined << "\n";
     }
     
-    combined << "\n" << GetMenuStr(wm);
-    // 메뉴 줄 잔상 제거 패딩
-    combined << "                                                                                ";
+    combined << "\n" << GetMenuStr(wm); // 한 칸 띄우고 메뉴 출력
+    combined << "\033[J"; // 화면 끝까지 잔상 제거
 
     std::cout << combined.str() << std::flush;
     
-    // 입력 커서 고정 (y=42 정도, 메뉴 출력 아래)
-    SetCursor(4, 42); 
+    // 입력 커서 고정
+    SetCursor(4, (int)maxRows + 2); 
 }
 
 std::string UIManager::GetMainContentStr(const WorldManager& wm, int mode) {
     std::stringstream ss;
     switch (mode) {
-        case 0: ss << " " << WHITE << BOLD << "[ Map View ]" << RESET << "\n Use WASD to navigate. Visit 'C' to open city menu.\n"; break;
+        case 0: ss << " " << WHITE << BOLD << "[ Map View ]" << RESET << "\n Use WASD to navigate. Visit 'C' to open city menu."; break;
         case 1: {
             ss << " " << CYAN << BOLD << "[ Available Cargo ]" << RESET << " at " << (wm.GetCurrentCity() ? wm.GetCurrentCity()->GetName() : "City") << "\n";
             const auto& routes = wm.GetCurrentRoutes();
             for (int i = 0; i < (int)routes.size(); ++i) {
                 ss << " " << YELLOW << i + 1 << "." << RESET << " To " << std::left << std::setw(12) << routes[i].destination->GetName() 
                    << " | Dist: " << std::setw(3) << (int)routes[i].distance << "km"
-                   << " | Reward: " << GREEN << routes[i].baseReward << "G" << RESET << "\n";
+                   << " | Reward: " << GREEN << routes[i].baseReward << "G" << RESET << (i < (int)routes.size()-1 ? "\n" : "");
             }
             break;
         }
@@ -217,7 +222,7 @@ std::string UIManager::GetMainContentStr(const WorldManager& wm, int mode) {
                 bool isCur = (garage[i].get() == wm.GetCurrentCar());
                 ss << " " << (isCur ? GREEN + BOLD + "* " : GRAY + ". ") << i + 1 << ". " << RESET
                    << std::left << std::setw(15) << (isCur ? BOLD + garage[i]->GetName() : garage[i]->GetName()) << RESET
-                   << " Condition: " << (int)garage[i]->GetCondition() << "%\n";
+                   << " Condition: " << (int)garage[i]->GetCondition() << "%" << (i < (int)garage.size()-1 ? "\n" : "");
             }
             break;
         }
@@ -232,17 +237,17 @@ std::string UIManager::GetMainContentStr(const WorldManager& wm, int mode) {
             auto& iShop = wm.GetItemShopList();
             for (int i = 0; i < (int)iShop.size(); ++i) {
                 ss << " " << i + 7 << ". " << std::left << std::setw(15) << iShop[i].name 
-                   << " Price: " << GREEN << iShop[i].price << "G" << RESET << "\n";
+                   << " Price: " << GREEN << iShop[i].price << "G" << RESET << (i < (int)iShop.size()-1 ? "\n" : "");
             }
             break;
         }
         case 5: {
             ss << " " << GREEN << BOLD << "[ Inventory ]" << RESET << "\n";
             auto& inv = wm.GetInventory();
-            if (inv.empty()) ss << GRAY << " (Inventory is empty)" << RESET << "\n";
+            if (inv.empty()) ss << GRAY << " (Inventory is empty)";
             for (int i = 0; i < (int)inv.size(); ++i) {
                 ss << " " << i + 1 << ". " << std::left << std::setw(20) << inv[i].name 
-                   << " | Effect: +" << (int)inv[i].effectValue << "\n";
+                   << " | Effect: +" << (int)inv[i].effectValue << (i < (int)inv.size()-1 ? "\n" : "");
             }
             break;
         }
@@ -252,11 +257,29 @@ std::string UIManager::GetMainContentStr(const WorldManager& wm, int mode) {
 
 std::string UIManager::GetMenuStr(const WorldManager& wm) {
     std::stringstream ss;
-    ss << BOLD << " [CONTROL]" << RESET << " " << YELLOW << "WASD" << RESET << ":Move | " 
-       << YELLOW << "1" << RESET << ":Cargo | " << YELLOW << "2" << RESET << ":Rest | " 
-       << YELLOW << "3" << RESET << ":Garage | " << YELLOW << "4" << RESET << ":Shop | " 
-       << YELLOW << "5" << RESET << ":Inv | " << RED << "0" << RESET << ":Exit\n";
-    ss << " >> ";
+    bool inCity = (wm.GetCurrentCity() != nullptr);
+
+    ss << BOLD << " [CONTROL]" << RESET << " " << YELLOW << "WASD" << RESET << ":Move | ";
+    
+    if (inCity) {
+        ss << YELLOW << "1" << RESET << ":Cargo | ";
+    }
+    
+    ss << YELLOW << "2" << RESET << ":Rest | " 
+       << YELLOW << "3" << RESET << ":Garage | ";
+    
+    if (inCity) {
+        ss << YELLOW << "4" << RESET << ":Shop | ";
+    }
+    
+    ss << YELLOW << "5" << RESET << ":Inv | ";
+
+    if (inCity) {
+        ss << YELLOW << "6" << RESET << ":Repair | ";
+    }
+    
+    ss << RED << "0" << RESET << ":Exit" << "\033[K\n"; // 줄 끝까지 지우고 줄바꿈
+    ss << " >> " << "\033[K"; // 줄 끝까지 지우기
     return ss.str();
 }
 
