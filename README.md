@@ -151,4 +151,21 @@ graph TD
 
 ---
 
+## 📚 7. 단계별 개발 기록 (Step-by-Step DevLog)
+
+본 프로젝트의 설계 과정과 핵심 기술 구현 단계를 상세히 기록한 문서입니다. C++ 및 OOP 학습에 입문하시는 분들을 위해 단계별 가이드를 제공합니다.
+
+- **[01. Overview](DOCS/DevLog/01_Overview.md)**: 프로젝트 전체 아키텍처 및 설계 원칙 개요
+- **[02. Car Class](DOCS/DevLog/02_Car_Class.md)**: 차량 추상 클래스 설계 및 캡슐화
+- **[03. Inheritance](DOCS/DevLog/03_Inheritance.md)**: 상속을 통한 다양한 차량 타입(Bus, Truck 등) 확장
+- **[04. Vector Management](DOCS/DevLog/04_Vector_Management.md)**: 동적 배열 관리 및 객체 수명 주기 제어
+- **[05. Game Loop](DOCS/DevLog/05_Game_Loop.md)**: 사용자 입력 처리 및 프레임 기반 메인 루프 설계
+- **[06. Shop System](DOCS/DevLog/06_Shop_System.md)**: 상점 시스템 및 무작위 데이터 생성 로직 구현
+- **[07. Troubleshooting](DOCS/DevLog/07_Troubleshooting.md)**: 개발 중 발생한 버그 및 메모리 이슈 해결 과정
+- **[08. Graph System](DOCS/DevLog/08_Graph_System.md)**: 그래프(Node/Edge) 기반 도시 네트워크 아키텍처
+- **[08. Modern C++ Memory](DOCS/DevLog/08_Modern_CPP_Memory.md)**: 스마트 포인터(RAII)를 활용한 현대적 메모리 관리
+- **[09. Item and Condition](DOCS/DevLog/09_Item_and_Condition.md)**: 내구도/에너지 시스템 및 아이템 활용 로직
+
+---
+
 *본 프로젝트는 C++ 프로그래밍 교육 및 시뮬레이션 로직 설계를 위해 제작되었습니다.*
